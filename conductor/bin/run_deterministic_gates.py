@@ -15,6 +15,7 @@ Supported gate types:
 Exit codes:
     0 – all *required* gates passed (or were skipped as not applicable)
     1 – at least one required gate failed
+    2 – all gates were skipped; results are inconclusive (auto-merge should NOT proceed)
 """
 
 from __future__ import annotations
@@ -28,6 +29,12 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+# ---------------------------------------------------------------------------
+# Exit-code constants
+# ---------------------------------------------------------------------------
+
+EXIT_INCONCLUSIVE = 2
 
 # ---------------------------------------------------------------------------
 # ANSI colours (respects NO_COLOR and non-tty)
@@ -138,6 +145,23 @@ class GateResult:
 # Gate implementations
 # ---------------------------------------------------------------------------
 
+# Patterns that indicate a test runner ran but found no actual tests.
+_NO_TEST_PATTERNS = [
+    re.compile(r'no\s+tests?\s+specified', re.IGNORECASE),
+    re.compile(r'no\s+tests?\s+found', re.IGNORECASE),
+    re.compile(r'\b0\s+tests?\b', re.IGNORECASE),
+    re.compile(r'error:\s*no\s+test\s+specified', re.IGNORECASE),
+]
+
+
+def _test_output_is_vacuous(output: str) -> bool:
+    """Return True if *output* matches common 'no real tests' patterns."""
+    for pat in _NO_TEST_PATTERNS:
+        if pat.search(output):
+            return True
+    return False
+
+
 def gate_unit_tests(project_root: str, gate: Dict[str, Any]) -> GateResult:
     """Run unit tests via npm test or pytest."""
     required = gate.get("required", False)
@@ -158,6 +182,11 @@ def gate_unit_tests(project_root: str, gate: Dict[str, Any]) -> GateResult:
             pkg = json.loads(_read_text(os.path.join(project_root, "package.json")))
             if "test" in pkg.get("scripts", {}):
                 exit_code, output = _run_external(["npm", "test"], project_root)
+                if exit_code == 0 and _test_output_is_vacuous(output):
+                    return GateResult(
+                        "unit_tests", required, passed=True, skipped=True,
+                        details="Test runner found but no real tests executed: " + output[:200],
+                    )
                 passed = exit_code == 0
                 return GateResult("unit_tests", required, passed, details=output)
         except (json.JSONDecodeError, OSError):
@@ -165,6 +194,11 @@ def gate_unit_tests(project_root: str, gate: Dict[str, Any]) -> GateResult:
 
     if has_pytest and _which("pytest"):
         exit_code, output = _run_external(["pytest", "--tb=short", "-q"], project_root)
+        if exit_code == 0 and _test_output_is_vacuous(output):
+            return GateResult(
+                "unit_tests", required, passed=True, skipped=True,
+                details="Test runner found but no real tests executed: " + output[:200],
+            )
         passed = exit_code == 0
         return GateResult("unit_tests", required, passed, details=output)
 
@@ -445,6 +479,59 @@ def gate_recency_check(
     )
 
 
+def gate_scope_validation(
+    output_dir: str,
+    commit_scope: Optional[List[str]] = None,
+) -> GateResult:
+    """Validate that changed files are within allowed directory prefixes.
+
+    If *commit_scope* is ``None`` or empty the gate is skipped.
+    Otherwise ``git diff --name-only HEAD`` is executed and every changed file
+    is checked against *commit_scope* prefixes.  Any file outside the allowed
+    scope causes a FAIL.
+    """
+    gate_type = "scope_validation"
+    required = True  # scope violations should block
+
+    if not commit_scope:
+        return GateResult(
+            gate_type, required, passed=True, skipped=True,
+            details="No commit_scope provided; skipping scope validation",
+        )
+
+    exit_code, output = _run_external(["git", "diff", "--name-only", "HEAD"], os.getcwd())
+    if exit_code != 0:
+        return GateResult(
+            gate_type, required, passed=False,
+            details=f"git diff failed (exit {exit_code}): {output}",
+        )
+
+    changed_files = [f for f in output.splitlines() if f.strip()]
+    if not changed_files:
+        return GateResult(
+            gate_type, required, passed=True,
+            details="No changed files detected",
+        )
+
+    violations: List[str] = []
+    for fpath in changed_files:
+        normalised = fpath.replace("\\", "/")
+        if not any(normalised.startswith(prefix.replace("\\", "/")) for prefix in commit_scope):
+            violations.append(f"  {fpath}")
+
+    if violations:
+        detail = (
+            f"{len(violations)} file(s) outside allowed scope "
+            f"{commit_scope}:\n" + "\n".join(violations)
+        )
+        return GateResult(gate_type, required, passed=False, details=detail)
+
+    return GateResult(
+        gate_type, required, passed=True,
+        details=f"All {len(changed_files)} changed file(s) within allowed scope",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gate dispatcher
 # ---------------------------------------------------------------------------
@@ -455,6 +542,7 @@ _GATE_HANDLERS = {
     "citation_audit": "citation_audit",
     "source_verification": "source_verification",
     "recency_check": "recency_check",
+    "scope_validation": "scope_validation",
 }
 
 
@@ -478,6 +566,9 @@ def run_gate(
         return gate_source_verification(project_root, gate, output_dir)
     elif gate_type == "recency_check":
         return gate_recency_check(project_root, gate, output_dir)
+    elif gate_type == "scope_validation":
+        commit_scope = gate.get("commit_scope")
+        return gate_scope_validation(output_dir, commit_scope=commit_scope)
     else:
         return GateResult(
             gate_type, required, passed=True, skipped=True,
@@ -584,6 +675,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     failed = [r for r in results if not r.passed and not r.skipped]
     skipped = [r for r in results if r.skipped]
     required_failed = [r for r in failed if r.required]
+    any_actually_ran = bool(passed) or bool(failed)
 
     print(
         f"  {_GREEN}✅ {len(passed)} passed{_RESET}  "
@@ -597,6 +689,15 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"    • {r.gate_type}")
         print()
         return 1
+
+    # C2a — All gates skipped means inconclusive; auto-merge must NOT proceed.
+    if not any_actually_ran:
+        print(
+            f"\n  {_YELLOW}{_BOLD}WARNING: All gates were skipped "
+            f"(no test runner or linter found). "
+            f"Results are INCONCLUSIVE.{_RESET}\n"
+        )
+        return EXIT_INCONCLUSIVE
 
     if failed:
         print(f"\n  {_YELLOW}⚠️  {len(failed)} optional gate(s) failed (not blocking){_RESET}")

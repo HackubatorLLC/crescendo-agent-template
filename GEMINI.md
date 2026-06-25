@@ -2,6 +2,14 @@
 
 When acting as a subagent or coordinator in this repository, you MUST follow these rules:
 
+## Autonomous Mode Override
+When `autonomy.level` is `full` in the active profile, the following directives are superseded by the `during_execution` policies in the profile's `autonomy` section:
+- Directive 11: contradiction resolution → use `on_gate_failure` policy
+- Directive 14: cost estimation confirmation → use `pre_flight` approval (already given)
+- Directive 15: circuit breaker human ask → use `on_quota_exhaustion` policy
+- Directive 17: phase failure human wait → use `on_gate_failure` policy
+The Coordinator MUST log all decisions it would have asked the human about to `run_report.md` for post-run review.
+
 ## Isolation & Access Control
 1. **Worktrees**: All development tasks MUST be performed in isolated branches within the `.worktrees/` directory. Use the `using-git-worktrees` skill to set up your environment.
 2. **Conductor Integration**: Use the `conductor-worktree-hitl` skill to implement tasks tracked in the Conductor workflow.
@@ -19,17 +27,17 @@ When acting as a subagent or coordinator in this repository, you MUST follow the
 10. **Respect Budget Limits**: Do NOT spawn more agents than `budget.max_agents` allows.
 
 ## Quality Gates & Contradiction Resolution
-11. **Cross-Validate Before Merging**: Before any merge or final aggregation, the Coordinator MUST run `python conductor/bin/cross_validate_outputs.py`. If HIGH-severity contradictions are found, the merge is BLOCKED until a human resolves them.
+11. **Cross-Validate Before Merging**: Before any merge or final aggregation, the Coordinator MUST run `python conductor/bin/cross_validate_outputs.py`. If HIGH-severity contradictions are found, the merge is BLOCKED until a human resolves them. (In autonomous mode: apply `on_gate_failure` policy; log to run_report.md.)
 12. **Run Deterministic Gates First**: Before invoking any heuristic (LLM-based) quality gate, the Coordinator MUST run `python conductor/bin/run_deterministic_gates.py`. If any required deterministic gate fails, do NOT proceed to heuristic review — fix the deterministic failures first.
 13. **Project Prompts**: Check the `input/.sanitized/` folder for current PRDs and constraints.
 
 ## Budget & Cost Control
-14. **Cost Estimation Before Dispatch**: If `profile.json` has `budget.cost_estimation_before_dispatch: true`, the Coordinator MUST print the estimated agent count and request human confirmation before spawning agents.
-15. **Circuit Breaker**: If cumulative token usage exceeds `budget.circuit_breaker_token_limit`, pause all agents and ask the human whether to continue or abort.
+14. **Cost Estimation Before Dispatch**: If `profile.json` has `budget.cost_estimation_before_dispatch: true`, the Coordinator MUST print the estimated agent count and request human confirmation before spawning agents. (In autonomous mode: use pre-flight approval as confirmation; log estimates to run_report.md.)
+15. **Circuit Breaker**: If cumulative token usage exceeds `budget.circuit_breaker_token_limit`, pause all agents and ask the human whether to continue or abort. (In autonomous mode: apply `on_quota_exhaustion` policy from the autonomy config.)
 
 ## Phased Execution
 16. **Respect Phase Order**: If `profile.json` defines a `phases` array, the Coordinator MUST execute phases sequentially. Agents within a phase may run in parallel, but all agents in Phase N must complete before Phase N+1 begins.
-17. **Dependency Enforcement**: If a phase fails (per the `failure_strategy`), do NOT start subsequent phases. Report the failure and wait for human direction.
+17. **Dependency Enforcement**: If a phase fails (per the `failure_strategy`), do NOT start subsequent phases. Report the failure and wait for human direction. (In autonomous mode: apply `on_gate_failure` policy; log to run_report.md.)
 
 ## Failure Handling
 18. **Follow the Failure Strategy**: Read `profile.json`'s `failure_strategy.strategy` to determine behavior when agents fail:
@@ -57,9 +65,9 @@ When acting as a subagent or coordinator in this repository, you MUST follow the
 29. **Contradiction Detection Layers**: The Coordinator runs contradiction detection layers as specified in `contradiction_detection.layers`. Only layers listed in `blocking_layers` can block a merge.
 
 ## Model Routing (#18)
-30. **Capability-Matched Routing**: Before spawning each subagent, the Coordinator MUST read `model_routing.roles` to determine the preferred model. Specify the model in the `invoke_subagent` call.
-31. **Fallback on Limit**: If the preferred model fails (rate limit, unavailable, session exhaustion), iterate through the `fallback` array in order. Do NOT fall below `min_tier`.
-32. **Session Tracking**: If `model_routing.session_awareness.track_usage_per_model` is `true`, maintain a running count of tokens used per model in `orchestration_state.json`.
+30. **Model Awareness (Advisory)**: Before spawning subagents, the Coordinator SHOULD note the `model_routing.roles` preference for the agent's role and log which model would have been selected. Since `invoke_subagent` does not currently accept a model parameter, model selection is advisory only. Check `model_routing.status` — if `advisory`, log preferences; if `enforced`, specify the model in the invocation.
+31. **Fallback Documentation**: If `model_routing.status` is `advisory`, log the fallback chain that would have been used. When the platform supports per-subagent model selection, this becomes enforceable.
+32. **Session Tracking**: If `model_routing.session_awareness.track_usage_per_model` is `true`, maintain a running count of tokens used per model in `orchestration_state.json` for reporting purposes.
 
 ## Aggregation Strategies (#16)
 33. **git_merge**: Standard git merge of worktree branches. Used for engineering. Conflicts resolved by the Coordinator or escalated to human.
