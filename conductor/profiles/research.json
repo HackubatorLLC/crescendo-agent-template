@@ -1,6 +1,6 @@
 {
   "domain": "research",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "data_classification": "internal",
   "isolation": {
     "strategy": "folder",
@@ -27,6 +27,25 @@
   },
   "budget": {
     "max_agents": 6,
-    "max_retries_per_agent": 2
+    "budget_limit_usd": 4.00,
+    "cost_estimation_before_dispatch": true,
+    "circuit_breaker_token_limit": 400000
+  },
+  "phases": [
+    {
+      "name": "data_gathering",
+      "description": "Data collection and source acquisition",
+      "agent_roles": ["web_researcher", "data_collector"]
+    },
+    {
+      "name": "synthesis",
+      "description": "Analysis, synthesis, and report generation",
+      "agent_roles": ["analyst", "report_writer"]
+    }
+  ],
+  "failure_strategy": {
+    "strategy": "partial_merge_with_approval",
+    "retry_failed": false,
+    "max_retry_attempts": 2
   }
 }

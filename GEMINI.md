@@ -20,4 +20,25 @@ When acting as a subagent or coordinator in this repository, you MUST follow the
 
 ## Quality Gates & Contradiction Resolution
 11. **Cross-Validate Before Merging**: Before any merge or final aggregation, the Coordinator MUST run `python conductor/bin/cross_validate_outputs.py`. If HIGH-severity contradictions are found, the merge is BLOCKED until a human resolves them.
-12. **Project Prompts**: Check the `input/.sanitized/` folder for current PRDs and constraints.
+12. **Run Deterministic Gates First**: Before invoking any heuristic (LLM-based) quality gate, the Coordinator MUST run `python conductor/bin/run_deterministic_gates.py`. If any required deterministic gate fails, do NOT proceed to heuristic review — fix the deterministic failures first.
+13. **Project Prompts**: Check the `input/.sanitized/` folder for current PRDs and constraints.
+
+## Budget & Cost Control
+14. **Cost Estimation Before Dispatch**: If `profile.json` has `budget.cost_estimation_before_dispatch: true`, the Coordinator MUST print the estimated agent count and request human confirmation before spawning agents.
+15. **Circuit Breaker**: If cumulative token usage exceeds `budget.circuit_breaker_token_limit`, pause all agents and ask the human whether to continue or abort.
+
+## Phased Execution
+16. **Respect Phase Order**: If `profile.json` defines a `phases` array, the Coordinator MUST execute phases sequentially. Agents within a phase may run in parallel, but all agents in Phase N must complete before Phase N+1 begins.
+17. **Dependency Enforcement**: If a phase fails (per the `failure_strategy`), do NOT start subsequent phases. Report the failure and wait for human direction.
+
+## Failure Handling
+18. **Follow the Failure Strategy**: Read `profile.json`'s `failure_strategy.strategy` to determine behavior when agents fail:
+    - `all_or_nothing`: If any agent fails, roll back all changes and report.
+    - `best_effort`: Merge successful outputs, flag failures in the report.
+    - `partial_merge_with_approval`: Merge successful outputs only after human approves the partial result.
+19. **Retry Policy**: If `failure_strategy.retry_failed` is `true`, retry failed agents up to `failure_strategy.max_retry_attempts` times before declaring failure.
+
+## Orchestration State (Crash Recovery)
+20. **Initialize State**: At the start of every orchestration run, run `python conductor/bin/orchestration_state.py init` to create `orchestration_state.json`.
+21. **Track Agent Status**: Register each agent and update its status as it progresses. If the Coordinator crashes, a new session can run `python conductor/bin/orchestration_state.py resume` to identify which agents need re-dispatch.
+

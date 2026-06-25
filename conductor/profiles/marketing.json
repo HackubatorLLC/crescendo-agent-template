@@ -1,6 +1,6 @@
 {
   "domain": "marketing",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "data_classification": "public",
   "isolation": {
     "strategy": "folder",
@@ -26,6 +26,30 @@
   },
   "budget": {
     "max_agents": 6,
-    "max_retries_per_agent": 2
+    "budget_limit_usd": 3.00,
+    "cost_estimation_before_dispatch": true,
+    "circuit_breaker_token_limit": 300000
+  },
+  "phases": [
+    {
+      "name": "research_and_brief",
+      "description": "Market research and creative brief development",
+      "agent_roles": ["market_researcher", "brief_writer"]
+    },
+    {
+      "name": "content_creation",
+      "description": "Content drafting and asset production",
+      "agent_roles": ["copywriter", "designer"]
+    },
+    {
+      "name": "brand_qa",
+      "description": "Brand consistency and quality assurance review",
+      "agent_roles": ["brand_reviewer", "editor_in_chief"]
+    }
+  ],
+  "failure_strategy": {
+    "strategy": "best_effort",
+    "retry_failed": false,
+    "max_retry_attempts": 2
   }
 }

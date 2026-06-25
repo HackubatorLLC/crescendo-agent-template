@@ -1,6 +1,6 @@
 {
   "domain": "engineering",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "data_classification": "internal",
   "isolation": {
     "strategy": "worktree",
@@ -28,6 +28,30 @@
   },
   "budget": {
     "max_agents": 8,
-    "max_retries_per_agent": 2
+    "budget_limit_usd": 5.00,
+    "cost_estimation_before_dispatch": true,
+    "circuit_breaker_token_limit": 500000
+  },
+  "phases": [
+    {
+      "name": "foundation",
+      "description": "Foundation and data layer setup",
+      "agent_roles": ["data_engineer", "architect"]
+    },
+    {
+      "name": "implementation",
+      "description": "Core feature implementation",
+      "agent_roles": ["backend_developer", "frontend_developer"]
+    },
+    {
+      "name": "testing_and_review",
+      "description": "Testing, code review, and quality assurance",
+      "agent_roles": ["tester", "code_reviewer"]
+    }
+  ],
+  "failure_strategy": {
+    "strategy": "all_or_nothing",
+    "retry_failed": true,
+    "max_retry_attempts": 2
   }
 }

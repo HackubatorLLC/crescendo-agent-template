@@ -8,7 +8,7 @@ default:
 git-status-condutree:
     python conductor/bin/git_status_patched.py
 
-# Initialize a new agent worktree with shared configuration (.env symlinking)
+# Initialize a new agent worktree with shared configuration (read-only copies)
 init-worktree track_id role:
     @echo "Initializing worktree for track {{track_id}} role {{role}}..."
     git worktree add .worktrees/{{track_id}}-{{role}} -b feature/{{track_id}}
@@ -18,10 +18,12 @@ init-worktree track_id role:
     # would let any agent mutate the single source of truth for all worktrees.
     @echo "Copying conductor/ (read-only) into worktree..."
     Copy-Item -Path "conductor" -Destination ".worktrees/{{track_id}}-{{role}}/conductor" -Recurse -Force
-    Set-ItemProperty -Path ".worktrees/{{track_id}}-{{role}}/conductor" -Name IsReadOnly -Value $true
+    # OS-level enforcement via NTFS ACLs — cannot be bypassed by agents,
+    # unlike the IsReadOnly file attribute which any process can flip.
+    icacls ".worktrees/{{track_id}}-{{role}}/conductor" /deny "Everyone:(OI)(CI)(W)" /T /Q
     
-    @echo "Symlinking .env (if exists)"
-    if (Test-Path ".env") { New-Item -ItemType SymbolicLink -Path ".worktrees/{{track_id}}-{{role}}/.env" -Target "../../.env" -Force | Out-Null }
+    @echo "Copying .env (read-only — agents must not mutate shared credentials)"
+    if (Test-Path ".env") { Copy-Item -Force ".env" ".worktrees/{{track_id}}-{{role}}/.env"; icacls ".worktrees/{{track_id}}-{{role}}/.env" /deny "Everyone:(W)" /Q }
     
     @echo "Updating git excludes"
     Add-Content -Path ".git/worktrees/{{track_id}}-{{role}}/info/exclude" -Value "conductor"
