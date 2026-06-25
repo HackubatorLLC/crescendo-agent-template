@@ -1,0 +1,37 @@
+{
+  "domain": "legal",
+  "version": "1.0.0",
+  "data_classification": "confidential",
+  "isolation": {
+    "strategy": "folder",
+    "base_path": ".worktrees/",
+    "pattern": "{track_id}-{role}",
+    "access_control": {
+      "conductor_access": "read-only-copy",
+      "cross_agent_visibility": false
+    }
+  },
+  "agent_archetypes": [],
+  "shared_truth": {
+    "product": "conductor/product.md",
+    "tech_stack": "conductor/tech-stack.md",
+    "workflow": "conductor/workflow.md"
+  },
+  "quality_gates": [
+    { "type": "citation_audit", "mechanism": "deterministic", "required": true },
+    {
+      "type": "compliance_review",
+      "mechanism": "heuristic",
+      "agents": ["compliance_officer", "senior_counsel"],
+      "required": true
+    }
+  ],
+  "aggregation": {
+    "strategy": "document_assembly",
+    "reviewer_agent": "general_counsel"
+  },
+  "budget": {
+    "max_agents": 4,
+    "max_retries_per_agent": 2
+  }
+}

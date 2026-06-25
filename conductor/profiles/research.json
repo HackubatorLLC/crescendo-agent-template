@@ -1,0 +1,32 @@
+{
+  "domain": "research",
+  "version": "1.0.0",
+  "data_classification": "internal",
+  "isolation": {
+    "strategy": "folder",
+    "base_path": ".worktrees/",
+    "pattern": "{track_id}-{role}",
+    "access_control": {
+      "conductor_access": "read-only-copy",
+      "cross_agent_visibility": false
+    }
+  },
+  "agent_archetypes": [],
+  "shared_truth": {
+    "product": "conductor/product.md",
+    "tech_stack": "conductor/tech-stack.md",
+    "workflow": "conductor/workflow.md"
+  },
+  "quality_gates": [
+    { "type": "source_verification", "mechanism": "deterministic", "required": true },
+    { "type": "recency_check", "mechanism": "deterministic", "required": true }
+  ],
+  "aggregation": {
+    "strategy": "matrix_assembly",
+    "reviewer_agent": "research_lead"
+  },
+  "budget": {
+    "max_agents": 6,
+    "max_retries_per_agent": 2
+  }
+}

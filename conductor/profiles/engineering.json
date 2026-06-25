@@ -1,0 +1,33 @@
+{
+  "domain": "engineering",
+  "version": "1.0.0",
+  "data_classification": "internal",
+  "isolation": {
+    "strategy": "worktree",
+    "base_path": ".worktrees/",
+    "pattern": "{track_id}-{role}",
+    "access_control": {
+      "conductor_access": "read-only-copy",
+      "cross_agent_visibility": false
+    }
+  },
+  "agent_archetypes": [],
+  "shared_truth": {
+    "product": "conductor/product.md",
+    "tech_stack": "conductor/tech-stack.md",
+    "workflow": "conductor/workflow.md"
+  },
+  "quality_gates": [
+    { "type": "unit_tests", "mechanism": "deterministic", "required": true },
+    { "type": "lint", "mechanism": "deterministic", "required": true },
+    { "type": "code_review", "mechanism": "heuristic", "agent": "code_reviewer", "required": true }
+  ],
+  "aggregation": {
+    "strategy": "git_merge",
+    "reviewer_agent": "coordinator"
+  },
+  "budget": {
+    "max_agents": 8,
+    "max_retries_per_agent": 2
+  }
+}

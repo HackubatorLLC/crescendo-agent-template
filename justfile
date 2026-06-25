@@ -13,8 +13,12 @@ init-worktree track_id role:
     @echo "Initializing worktree for track {{track_id}} role {{role}}..."
     git worktree add .worktrees/{{track_id}}-{{role}} -b feature/{{track_id}}
     
-    @echo "Symlinking conductor/"
-    New-Item -ItemType SymbolicLink -Path ".worktrees/{{track_id}}-{{role}}/conductor" -Target "../../conductor" -Force | Out-Null
+    # DATA ISOLATION: Copy conductor/ as read-only instead of symlinking.
+    # Agents must NOT be able to modify shared conductor config — a symlink
+    # would let any agent mutate the single source of truth for all worktrees.
+    @echo "Copying conductor/ (read-only) into worktree..."
+    Copy-Item -Path "conductor" -Destination ".worktrees/{{track_id}}-{{role}}/conductor" -Recurse -Force
+    Set-ItemProperty -Path ".worktrees/{{track_id}}-{{role}}/conductor" -Name IsReadOnly -Value $true
     
     @echo "Symlinking .env (if exists)"
     if (Test-Path ".env") { New-Item -ItemType SymbolicLink -Path ".worktrees/{{track_id}}-{{role}}/.env" -Target "../../.env" -Force | Out-Null }
@@ -24,3 +28,7 @@ init-worktree track_id role:
     Add-Content -Path ".git/worktrees/{{track_id}}-{{role}}/info/exclude" -Value ".env"
     
     @echo "Worktree ready at .worktrees/{{track_id}}-{{role}}"
+
+# Sanitize all files in input/ — strips prompt injections, invisible chars, HTML comments
+sanitize-inputs:
+    python conductor/bin/sanitize_inputs.py
