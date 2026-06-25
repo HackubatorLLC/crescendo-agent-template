@@ -1,7 +1,11 @@
 {
   "domain": "research",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "data_classification": "internal",
+  "composition": {
+    "extends": null,
+    "mixins": []
+  },
   "isolation": {
     "strategy": "folder",
     "base_path": ".worktrees/",
@@ -47,5 +51,63 @@
     "strategy": "partial_merge_with_approval",
     "retry_failed": false,
     "max_retry_attempts": 2
+  },
+  "temporal_constraints": {
+    "deadline_aware": false,
+    "output_ttl_hours": 4320,
+    "real_time": false
+  },
+  "iteration_policy": {
+    "max_refinement_rounds": 2,
+    "feedback_loop": "peer_review",
+    "auto_iterate_on_gate_failure": false
+  },
+  "resource_locking": {
+    "exclusive_files": false,
+    "lock_mechanism": "folder_isolation",
+    "conflict_resolution": "merge"
+  },
+  "contradiction_detection": {
+    "layers": ["claims", "similarity"],
+    "claims_required": true,
+    "similarity_model_tier": "flash",
+    "blocking_layers": ["claims"]
+  },
+  "output_contract": {
+    "claims_required": true,
+    "claims_schema": "entity-attribute-value"
+  },
+  "model_routing": {
+    "strategy": "capability_matched",
+    "roles": {
+      "coordinator": {
+        "capabilities_required": ["planning", "orchestration"],
+        "preferred": ["gemini-3.1-pro-high"],
+        "fallback": ["claude-opus-4.6", "gemini-3.1-pro-low"],
+        "min_tier": "pro"
+      },
+      "worker": {
+        "capabilities_required": ["research", "analysis", "web_search"],
+        "preferred": ["gemini-3.1-pro-high"],
+        "fallback": ["claude-opus-4.6", "gemini-3.1-pro-low"],
+        "min_tier": "standard"
+      },
+      "quality_reviewer": {
+        "capabilities_required": ["reasoning", "source_verification"],
+        "preferred": ["claude-opus-4.6-thinking"],
+        "fallback": ["gemini-3.1-pro-high"],
+        "min_tier": "pro"
+      },
+      "bookkeeping": {
+        "capabilities_required": ["file_reading"],
+        "preferred": ["gemini-3.1-flash"],
+        "fallback": ["claude-haiku-4"],
+        "min_tier": "flash"
+      }
+    },
+    "session_awareness": {
+      "track_usage_per_model": true,
+      "auto_fallback_on_limit": true
+    }
   }
 }

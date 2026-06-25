@@ -78,3 +78,51 @@ python conductor/bin/orchestration_state.py resume --run-id <id>
 
 The `orchestration_state.json` file persists to disk, so if the Coordinator crashes mid-run, a new session can read it and resume without re-dispatching completed agents.
 
+## Aggregation Strategies
+
+The `aggregation.strategy` field in `profile.json` determines how agent outputs are combined:
+
+### `git_merge`
+Standard git merge. Each agent works in an isolated worktree branch. The Coordinator merges branches sequentially, resolving conflicts. If auto-merge fails, the conflict is presented to the human.
+
+### `editorial_merge`
+The reviewer agent receives all outputs and produces a single unified document. This is NOT a mechanical merge — the reviewer exercises editorial judgment to select the strongest content, resolve tonal inconsistencies, and create a coherent narrative. Used for marketing and content domains.
+
+### `document_assembly`
+Each agent's output maps to a predefined section of the final document. The reviewer agent assembles sections in order, verifies cross-references, ensures citation consistency, and checks that conclusions in later sections don't contradict findings in earlier ones. Used for legal and compliance domains.
+
+### `matrix_assembly`
+Outputs are organized into a two-dimensional matrix (e.g., locale × string for localization, topic × source for research). The reviewer fills gaps, flags inconsistencies across matrix cells, and produces both the assembled matrix and a gap analysis report. Used for research and localization domains.
+
+## Model Routing Protocol
+
+When spawning subagents, the Coordinator must follow the model routing policy defined in `profile.json`:
+
+1. Read `model_routing.roles.<role_type>` for the agent being spawned.
+2. Use the first model in `preferred` that is available.
+3. If the preferred model fails (rate limit, session exhaustion, error), try each model in `fallback` in order.
+4. Never fall below `min_tier` — if all fallbacks above `min_tier` are exhausted, report to human.
+5. If `session_awareness.track_usage_per_model` is `true`, log token usage per model in `orchestration_state.json`.
+
+## Output Contracts
+
+If `output_contract.claims_required` is `true` in the profile, every agent must produce two files:
+1. The deliverable (e.g., `output/analysis.md`)
+2. A claims file (e.g., `output/analysis.claims.json`)
+
+The claims file follows the entity-attribute-value schema:
+```json
+{
+  "claims": [
+    {
+      "entity": "string — the subject of the claim",
+      "attribute": "string — what aspect is being claimed",
+      "value": "string — the asserted value",
+      "confidence": "number 0-1 — agent's self-assessed confidence",
+      "source": "string — where this claim comes from"
+    }
+  ]
+}
+```
+
+The cross-validator uses these claims for Layer 1 deterministic contradiction detection.

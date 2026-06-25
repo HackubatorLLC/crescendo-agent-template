@@ -1,7 +1,11 @@
 {
   "domain": "engineering",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "data_classification": "internal",
+  "composition": {
+    "extends": null,
+    "mixins": []
+  },
   "isolation": {
     "strategy": "worktree",
     "base_path": ".worktrees/",
@@ -53,5 +57,62 @@
     "strategy": "all_or_nothing",
     "retry_failed": true,
     "max_retry_attempts": 2
+  },
+  "temporal_constraints": {
+    "deadline_aware": false,
+    "output_ttl_hours": null,
+    "real_time": false
+  },
+  "iteration_policy": {
+    "max_refinement_rounds": 1,
+    "feedback_loop": "code_review",
+    "auto_iterate_on_gate_failure": true
+  },
+  "resource_locking": {
+    "exclusive_files": true,
+    "lock_mechanism": "git_worktree",
+    "conflict_resolution": "merge"
+  },
+  "contradiction_detection": {
+    "layers": ["claims"],
+    "claims_required": true,
+    "blocking_layers": ["claims"]
+  },
+  "output_contract": {
+    "claims_required": true,
+    "claims_schema": "entity-attribute-value"
+  },
+  "model_routing": {
+    "strategy": "capability_matched",
+    "roles": {
+      "coordinator": {
+        "capabilities_required": ["planning", "orchestration", "long_context"],
+        "preferred": ["gemini-3.1-pro-high"],
+        "fallback": ["claude-opus-4.6-thinking", "gemini-3.1-pro-low"],
+        "min_tier": "pro"
+      },
+      "worker": {
+        "capabilities_required": ["code_generation", "reasoning"],
+        "preferred": ["gemini-3.1-pro-high", "claude-opus-4.6"],
+        "fallback": ["gemini-3.1-pro-low", "claude-sonnet-4.6"],
+        "min_tier": "pro"
+      },
+      "quality_reviewer": {
+        "capabilities_required": ["reasoning", "analysis"],
+        "preferred": ["claude-opus-4.6-thinking"],
+        "fallback": ["gemini-3.1-pro-high"],
+        "min_tier": "pro"
+      },
+      "bookkeeping": {
+        "capabilities_required": ["file_reading"],
+        "preferred": ["gemini-3.1-flash"],
+        "fallback": ["claude-haiku-4"],
+        "min_tier": "flash"
+      }
+    },
+    "session_awareness": {
+      "track_usage_per_model": true,
+      "auto_fallback_on_limit": true
+    }
   }
 }

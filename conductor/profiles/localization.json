@@ -1,7 +1,7 @@
 {
-  "domain": "marketing",
+  "domain": "localization",
   "version": "3.0.0",
-  "data_classification": "public",
+  "data_classification": "internal",
   "composition": {
     "extends": null,
     "mixins": []
@@ -12,7 +12,7 @@
     "pattern": "{track_id}-{role}",
     "access_control": {
       "conductor_access": "read-only-copy",
-      "cross_agent_visibility": false
+      "cross_agent_visibility": true
     }
   },
   "agent_archetypes": [],
@@ -22,60 +22,60 @@
     "workflow": "conductor/workflow.md"
   },
   "quality_gates": [
-    { "type": "brand_consistency", "mechanism": "heuristic", "agent": "brand_reviewer", "required": true }
+    { "type": "string_coverage", "mechanism": "deterministic", "required": true },
+    { "type": "cultural_review", "mechanism": "heuristic", "agent": "cultural_reviewer", "required": true }
   ],
   "aggregation": {
-    "strategy": "editorial_merge",
-    "reviewer_agent": "editor_in_chief"
+    "strategy": "matrix_assembly",
+    "reviewer_agent": "localization_lead"
   },
   "budget": {
-    "max_agents": 6,
-    "budget_limit_usd": 3.00,
+    "max_agents": 10,
+    "budget_limit_usd": 4.00,
     "cost_estimation_before_dispatch": true,
-    "circuit_breaker_token_limit": 300000
+    "circuit_breaker_token_limit": 400000
   },
   "phases": [
     {
-      "name": "research_and_brief",
-      "description": "Market research and creative brief development",
-      "agent_roles": ["market_researcher", "brief_writer"]
+      "name": "extraction",
+      "description": "Extract translatable strings and context from source",
+      "agent_roles": ["string_extractor"]
     },
     {
-      "name": "content_creation",
-      "description": "Content drafting and asset production",
-      "agent_roles": ["copywriter", "designer"]
+      "name": "translation",
+      "description": "Parallel translation across target locales",
+      "agent_roles": ["translator_es", "translator_fr", "translator_de", "translator_ja", "translator_ar"]
     },
     {
-      "name": "brand_qa",
-      "description": "Brand consistency and quality assurance review",
-      "agent_roles": ["brand_reviewer", "editor_in_chief"]
+      "name": "cultural_qa",
+      "description": "Cultural appropriateness and consistency review",
+      "agent_roles": ["cultural_reviewer", "localization_lead"]
     }
   ],
   "failure_strategy": {
-    "strategy": "best_effort",
-    "retry_failed": false,
+    "strategy": "partial_merge_with_approval",
+    "retry_failed": true,
     "max_retry_attempts": 2
   },
   "temporal_constraints": {
     "deadline_aware": true,
-    "output_ttl_hours": 720,
+    "output_ttl_hours": 2160,
     "real_time": false
   },
   "iteration_policy": {
-    "max_refinement_rounds": 3,
-    "feedback_loop": "brand_review",
-    "auto_iterate_on_gate_failure": false
+    "max_refinement_rounds": 2,
+    "feedback_loop": "cultural_review",
+    "auto_iterate_on_gate_failure": true
   },
   "resource_locking": {
     "exclusive_files": false,
     "lock_mechanism": "folder_isolation",
-    "conflict_resolution": "editorial_merge"
+    "conflict_resolution": "merge"
   },
   "contradiction_detection": {
-    "layers": ["claims", "similarity", "adversarial"],
+    "layers": ["claims", "similarity"],
     "claims_required": true,
     "similarity_model_tier": "flash",
-    "adversarial_model_tier": "inherit",
     "blocking_layers": ["claims"]
   },
   "output_contract": {
@@ -86,21 +86,21 @@
     "strategy": "capability_matched",
     "roles": {
       "coordinator": {
-        "capabilities_required": ["planning", "orchestration"],
+        "capabilities_required": ["planning", "orchestration", "multilingual"],
         "preferred": ["gemini-3.1-pro-high"],
         "fallback": ["claude-opus-4.6", "gemini-3.1-pro-low"],
         "min_tier": "pro"
       },
       "worker": {
-        "capabilities_required": ["creative_writing", "brand_voice"],
-        "preferred": ["claude-opus-4.6"],
-        "fallback": ["gemini-3.1-pro-high", "claude-sonnet-4.6"],
+        "capabilities_required": ["translation", "multilingual", "cultural_awareness"],
+        "preferred": ["gemini-3.1-pro-high"],
+        "fallback": ["claude-opus-4.6", "gemini-3.1-pro-low"],
         "min_tier": "standard"
       },
       "quality_reviewer": {
-        "capabilities_required": ["analysis", "brand_consistency"],
-        "preferred": ["gemini-3.1-pro-high"],
-        "fallback": ["claude-opus-4.6"],
+        "capabilities_required": ["multilingual", "cultural_awareness", "analysis"],
+        "preferred": ["claude-opus-4.6"],
+        "fallback": ["gemini-3.1-pro-high"],
         "min_tier": "pro"
       },
       "bookkeeping": {
