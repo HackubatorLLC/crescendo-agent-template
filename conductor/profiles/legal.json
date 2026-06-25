@@ -15,7 +15,36 @@
       "cross_agent_visibility": false
     }
   },
-  "agent_archetypes": [],
+  "agent_archetypes": [
+    {
+      "role": "classifier",
+      "system_prompt_template": "You are a legal classifier who categorizes incoming issues by type, jurisdiction, and urgency. Route matters to the appropriate specialist for analysis.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "json",
+      "claims_required": true
+    },
+    {
+      "role": "legal_analyst",
+      "system_prompt_template": "You are a legal analyst who researches statutes, case law, and regulatory frameworks relevant to the matter. Produce structured analysis with citations.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "compliance_officer",
+      "system_prompt_template": "You are a compliance officer who reviews deliverables against regulatory requirements and internal policies. Flag non-compliant items with specific rule references.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "senior_counsel",
+      "system_prompt_template": "You are senior counsel providing final legal review and sign-off. Assess risk, validate analysis quality, and ensure all compliance requirements are met.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    }
+  ],
   "shared_truth": {
     "product": "conductor/product.md",
     "tech_stack": "conductor/tech-stack.md",
@@ -35,10 +64,12 @@
     "reviewer_agent": "general_counsel"
   },
   "budget": {
-    "max_agents": 4,
+    "mode": "quota_based",
+    "suggested_max_agents": 4,
     "budget_limit_usd": 8.00,
     "cost_estimation_before_dispatch": true,
-    "circuit_breaker_token_limit": 600000
+    "circuit_breaker_token_limit": 600000,
+    "max_total_retries_per_phase": 6
   },
   "phases": [
     {
@@ -89,6 +120,7 @@
     "claims_schema": "entity-attribute-value"
   },
   "model_routing": {
+    "status": "advisory",
     "strategy": "capability_matched",
     "roles": {
       "coordinator": {
@@ -118,7 +150,33 @@
     },
     "session_awareness": {
       "track_usage_per_model": true,
-      "auto_fallback_on_limit": true
+      "auto_fallback_on_limit": false
+    }
+  },
+  "autonomy": {
+    "level": "checkpoint",
+    "pre_flight": {
+      "estimate_tokens": true,
+      "confirm_commit_scope": true
+    },
+    "during_execution": {
+      "on_gate_failure": "retry_then_skip",
+      "on_ambiguity": "best_judgment",
+      "on_merge_conflict": "write_state_and_stop",
+      "on_quota_exhaustion": "estimate_then_wait_then_stop",
+      "on_agent_error": "retry_then_flag",
+      "heuristic_gates_blocking": "derived"
+    },
+    "model_strategy": {
+      "preference": "single_session",
+      "recommended_for_autonomous": "gemini-3.1-pro-high"
+    },
+    "post_run": {
+      "generate_report": true,
+      "flag_items_for_review": true,
+      "auto_commit": true,
+      "auto_merge_to_main": false,
+      "merge_to_main_requires_all_gates_pass": true
     }
   }
 }

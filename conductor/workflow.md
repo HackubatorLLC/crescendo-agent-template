@@ -126,3 +126,113 @@ The claims file follows the entity-attribute-value schema:
 ```
 
 The cross-validator uses these claims for Layer 1 deterministic contradiction detection.
+
+## Quota Recovery Layers
+
+The orchestrator uses a layered recovery strategy when quota or rate limits are hit mid-run:
+
+### Layer A — Pre-emptive Estimation (Always Active)
+
+- Before dispatching any agent, the Coordinator estimates the quota cost of the task.
+- All agents are **registered in `orchestration_state.json` before dispatch**, so the state file always reflects the intended work, even if a crash occurs before the agent starts.
+- If estimated cost exceeds remaining quota, the Coordinator defers the task or batches it into a lower-cost phase.
+
+### Layer B — Timer-Based Auto-Resume (Best-Effort)
+
+- When a quota pause is triggered, the Coordinator sets a timer and attempts to auto-resume after the cooldown period.
+- **This layer is best-effort only.** It may fail due to:
+  - Session timeout (the agent's session expires before the timer fires)
+  - Stray message cancellation (an unrelated system message cancels the pending timer)
+- **Probe operation**: `view_file` on `orchestration_state.json` — this has **zero quota cost** and confirms the state file is still readable before resuming.
+- **Thrashing protection**: If quota pauses occur **more than 2 times in a single run**, Layer B is skipped entirely and the Coordinator proceeds directly to Layer C. This prevents infinite pause-resume loops that waste session time without making progress.
+
+### Layer C — User-Assisted Resume (Guaranteed Fallback)
+
+- If Layer B fails or is skipped (due to thrashing protection), the Coordinator writes the full orchestration state to `orchestration_state.json` and generates a **resumption briefing** in `run_report.md`.
+- The resumption briefing includes: current phase, completed agents, pending agents, the reason for the pause, and the exact command to resume.
+- The human operator can resume the run in a new session using:
+  ```bash
+  python conductor/bin/orchestration_state.py resume --run-id <id>
+  ```
+- This layer is **guaranteed** to work because it has no dependency on timer mechanics or session persistence.
+
+## Auto-Merge Safety Rules
+
+All merges to the `main` branch must follow these safety rules:
+
+1. **Fast-forward or clean merge only.** Auto-merge to `main` MUST be a fast-forward or a clean merge with no conflicts. Squash merges are acceptable if configured in `profile.json`.
+
+2. **Conflict → PR, no merge.** If the merge has conflicts, create the Pull Request but **do NOT merge**. Log the following message to `run_report.md`:
+   ```
+   Auto-merge blocked: main has diverged.
+   ```
+   The PR will remain open for human resolution.
+
+3. **Never force-push.** NEVER force-push (`git push --force` or `git push --force-with-lease`) to **any** branch — not `main`, not feature branches, not worktree branches.
+
+4. **Post-merge deterministic gates.** Run `run_deterministic_gates.py` on the **POST-MERGE result** before pushing:
+   ```bash
+   python conductor/bin/run_deterministic_gates.py
+   ```
+   This validates that the merged code passes all deterministic quality checks (tests, lint, citations, source verification).
+
+5. **Gate failure → abort and revert.** If post-merge gates fail, **abort the push** and revert the local merge:
+   ```bash
+   git merge --abort  # if merge is in progress
+   git reset --hard HEAD~1  # if merge was committed locally
+   ```
+   Log the failure details in `run_report.md` and flag for human review.
+
+### Commit Scope Enforcement
+
+The following rules augment the auto-merge safety rules with directory-level write restrictions:
+
+- The `commit_scope` field from the pre-flight configuration (in `profile.json`) defines **which directories each agent is permitted to modify**.
+- **NTFS ACL enforcement**: On Windows, combine with `icacls` to deny-write on directories outside the agent's declared scope:
+  ```powershell
+  # Deny write access to directories outside commit_scope
+  icacls "C:\path\to\repo\outside-dir" /deny "AgentUser:(W)" /T
+  ```
+  This provides OS-level enforcement that cannot be bypassed by the agent process.
+- **Deterministic gate validation**: A `scope_validation` deterministic gate checks `git diff --name-only` against `commit_scope` after each agent commit:
+  ```bash
+  python conductor/bin/run_deterministic_gates.py --gate scope_validation
+  ```
+  If any modified file falls outside the declared `commit_scope`, the gate fails and the commit is rejected.
+
+## Autonomous Decision-Making
+
+When the Coordinator encounters ambiguity during execution, it classifies the decision into one of the following **ambiguity classes** and acts accordingly:
+
+### Ambiguity Classes
+
+| Class | Examples | Action |
+|-------|----------|--------|
+| `cosmetic` | Formatting, naming conventions, code style, whitespace | Coordinator uses **best judgment** and proceeds autonomously. |
+| `architectural` | Structural decisions, API design, module boundaries, dependency choices | **`write_state_and_stop`** — save state and pause for human review. |
+| `data_destructive` | File deletions, database migrations, schema changes, data transformations | **`write_state_and_stop`** — save state and pause for human review. |
+
+### Default Behavior
+
+If an ambiguity does not clearly fit into a defined class, the default policy is:
+
+> **`best_judgment_with_conservative_fallback`**
+
+The Coordinator makes a conservative decision (preferring no-op or minimal change) and logs it for post-run review. If confidence is below 0.5, it falls back to `write_state_and_stop`.
+
+### Decision Logging
+
+All autonomous decisions (including those made under `cosmetic` and `best_judgment_with_conservative_fallback`) must be logged to `run_report.md` with the following fields:
+
+| Field | Description |
+|-------|-------------|
+| `category` | The ambiguity class (`cosmetic`, `architectural`, `data_destructive`, or `default`) |
+| `what_was_ambiguous` | A brief description of the ambiguous situation |
+| `decision_made` | What the Coordinator decided to do |
+| `confidence` | Self-assessed confidence (0.0–1.0) in the decision |
+
+### Rate Limiting
+
+- **Maximum autonomous decisions per run**: `10` (configurable via `profile.json` field `max_autonomous_decisions`).
+- If the limit is exceeded, the Coordinator must **pause for human review** regardless of ambiguity class.
+- This prevents runaway autonomous behavior in runs that encounter unusual levels of ambiguity.

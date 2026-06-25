@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,10 +49,11 @@ _CYAN = "\033[36m" if _COLOUR_ENABLED else ""
 _DIM = "\033[2m" if _COLOUR_ENABLED else ""
 
 _STATUS_STYLE = {
-    "pending":   (_YELLOW, "⏳"),
-    "running":   (_CYAN,   "🔄"),
-    "completed": (_GREEN,  "✅"),
-    "failed":    (_RED,    "❌"),
+    "pending":     (_YELLOW, "⏳"),
+    "running":     (_CYAN,   "🔄"),
+    "completed":   (_GREEN,  "✅"),
+    "failed":      (_RED,    "❌"),
+    "interrupted": (_YELLOW, "⚡"),
 }
 
 _RUN_STATUS_STYLE = {
@@ -61,7 +63,7 @@ _RUN_STATUS_STYLE = {
     "partial":   (_YELLOW, "⚠️"),
 }
 
-VALID_AGENT_STATUSES = {"pending", "running", "completed", "failed"}
+VALID_AGENT_STATUSES = {"pending", "running", "completed", "failed", "interrupted"}
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +133,56 @@ def _resolve_project_root() -> str:
     return os.getcwd()
 
 
+def _get_git_head_sha(project_root: str) -> Optional[str]:
+    """Return the current git HEAD SHA, or None if git is unavailable."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=project_root,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+    except FileNotFoundError:
+        pass  # git not installed
+    return None
+
+
+def _git_commit_delta(project_root: str, old_sha: str) -> Optional[int]:
+    """Count commits between *old_sha* and current HEAD. Returns None on error."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-list", "--count", f"{old_sha}..HEAD"],
+            capture_output=True,
+            text=True,
+            cwd=project_root,
+        )
+        if result.returncode == 0:
+            return int(result.stdout.strip())
+    except (FileNotFoundError, ValueError):
+        pass
+    return None
+
+
+def interrupt_all_running(
+    state: Dict[str, Any],
+    reason: str = "quota_exhausted",
+) -> List[str]:
+    """Set every *running* agent to *interrupted* with the given reason.
+
+    Returns the list of agent IDs that were interrupted.
+    """
+    interrupted_ids: List[str] = []
+    for agent in state.get("agents", []):
+        if agent["status"] == "running":
+            agent["status"] = "interrupted"
+            agent["interrupt_reason"] = reason
+            agent["completed_at"] = _now_iso()
+            interrupted_ids.append(agent["agent_id"])
+    return interrupted_ids
+
+
 # ---------------------------------------------------------------------------
 # Subcommands
 # ---------------------------------------------------------------------------
@@ -152,12 +204,17 @@ def cmd_init(args: argparse.Namespace) -> int:
     profile_path = Path(args.profile)
     profile_name = profile_path.stem  # e.g. "engineering" from "conductor/profiles/engineering.json"
 
+    # H3: capture git HEAD SHA at init for divergence detection on resume
+    head_sha = _get_git_head_sha(project_root)
+
     state: Dict[str, Any] = {
         "run_id": args.run_id,
         "profile": profile_name,
         "start_time": _now_iso(),
+        "created_at": _now_iso(),
         "last_updated": _now_iso(),
         "status": "running",
+        "main_branch_sha": head_sha,
         "agents": [],
     }
 
@@ -165,6 +222,8 @@ def cmd_init(args: argparse.Namespace) -> int:
     print(f"{_GREEN}✅ Orchestration state initialised{_RESET}")
     print(f"   Run ID  : {_BOLD}{args.run_id}{_RESET}")
     print(f"   Profile : {profile_name}")
+    if head_sha:
+        print(f"   HEAD SHA: {_DIM}{head_sha[:12]}{_RESET}")
     print(f"   File    : {path}")
     return 0
 
@@ -200,6 +259,7 @@ def cmd_register(args: argparse.Namespace) -> int:
         "output_path": None,
         "started_at": None,
         "completed_at": None,
+        "interrupt_reason": None,
     }
 
     state["agents"].append(agent_entry)
@@ -249,16 +309,19 @@ def cmd_update(args: argparse.Namespace) -> int:
     # Timestamp bookkeeping
     if new_status == "running" and old_status != "running":
         agent["started_at"] = _now_iso()
-    if new_status in ("completed", "failed"):
+    if new_status in ("completed", "failed", "interrupted"):
         agent["completed_at"] = _now_iso()
     if new_status == "failed":
         agent["retries"] = agent.get("retries", 0) + 1
+    if new_status == "interrupted" and args.interrupt_reason:
+        agent["interrupt_reason"] = args.interrupt_reason
 
     if args.output_path:
         agent["output_path"] = args.output_path
 
-    # Recompute overall run status
-    _recompute_run_status(state)
+    # Recompute overall run status (with optional failure strategy)
+    failure_strategy = getattr(args, "failure_strategy", None)
+    _recompute_run_status(state, failure_strategy=failure_strategy)
     _save_state(project_root, state)
 
     colour, emoji = _STATUS_STYLE.get(new_status, (_RESET, "•"))
@@ -269,18 +332,37 @@ def cmd_update(args: argparse.Namespace) -> int:
     return 0
 
 
-def _recompute_run_status(state: Dict[str, Any]) -> None:
-    """Derive the overall run status from individual agent statuses."""
+def _recompute_run_status(
+    state: Dict[str, Any],
+    failure_strategy: Optional[str] = None,
+) -> None:
+    """Derive the overall run status from individual agent statuses.
+
+    If *failure_strategy* is ``"all_or_nothing"`` and any agent has failed,
+    the entire run is immediately marked as failed.
+    """
     agents = state.get("agents", [])
     if not agents:
         state["status"] = "running"
         return
 
+    # M4: all_or_nothing – any single failure halts the run
+    if failure_strategy == "all_or_nothing":
+        for a in agents:
+            if a["status"] == "failed":
+                print(
+                    f"{_RED}all_or_nothing: Agent {a['agent_id']} failed. "
+                    f"Halting entire run.{_RESET}",
+                    file=sys.stderr,
+                )
+                state["status"] = "failed"
+                return
+
     statuses = {a["status"] for a in agents}
 
     if statuses == {"completed"}:
         state["status"] = "completed"
-    elif "running" in statuses or "pending" in statuses:
+    elif "running" in statuses or "pending" in statuses or "interrupted" in statuses:
         state["status"] = "running"
     elif "failed" in statuses and "completed" in statuses:
         state["status"] = "partial"
@@ -322,16 +404,22 @@ def cmd_status(args: argparse.Namespace) -> int:
         return 0
 
     # Summary counts
-    counts: Dict[str, int] = {"pending": 0, "running": 0, "completed": 0, "failed": 0}
+    counts: Dict[str, int] = {
+        "pending": 0, "running": 0, "completed": 0, "failed": 0, "interrupted": 0,
+    }
     for a in agents:
         counts[a["status"]] = counts.get(a["status"], 0) + 1
 
     print(f"\n  {_BOLD}Agents ({len(agents)}):{_RESET}")
+    interrupted_str = ""
+    if counts["interrupted"]:
+        interrupted_str = f"  {_YELLOW}⚡ {counts['interrupted']} interrupted{_RESET}"
     print(
         f"    {_GREEN}✅ {counts['completed']} completed{_RESET}  "
         f"{_CYAN}🔄 {counts['running']} running{_RESET}  "
         f"{_YELLOW}⏳ {counts['pending']} pending{_RESET}  "
         f"{_RED}❌ {counts['failed']} failed{_RESET}"
+        f"{interrupted_str}"
     )
 
     # Per-phase grouping
@@ -374,6 +462,40 @@ def cmd_resume(args: argparse.Namespace) -> int:
         )
         return 1
 
+    # -----------------------------------------------------------------
+    # H3: main-branch divergence check
+    # -----------------------------------------------------------------
+    stored_sha = state.get("main_branch_sha")
+    divergence_delta: Optional[int] = None
+    if stored_sha:
+        current_sha = _get_git_head_sha(project_root)
+        if current_sha and current_sha != stored_sha:
+            divergence_delta = _git_commit_delta(project_root, stored_sha)
+            n = divergence_delta if divergence_delta is not None else "?"
+            print(
+                f"{_YELLOW}WARNING:{_RESET} main has diverged by "
+                f"{_BOLD}{n}{_RESET} commits since this run started.",
+                file=sys.stderr,
+            )
+
+    # H3: staleness check (max_stale_hours = 24)
+    created_at_str = state.get("created_at")
+    stale_hours: Optional[float] = None
+    if created_at_str:
+        try:
+            created_dt = datetime.fromisoformat(created_at_str)
+            age = datetime.now(timezone.utc) - created_dt
+            stale_hours = age.total_seconds() / 3600
+            if stale_hours > 24:
+                print(
+                    f"{_YELLOW}WARNING:{_RESET} This run state is "
+                    f"{_BOLD}{stale_hours:.1f}{_RESET} hours old. "
+                    f"Consider re-planning.",
+                    file=sys.stderr,
+                )
+        except (ValueError, TypeError):
+            pass
+
     # Load profile to get max retries if available
     max_retries = 2  # default
     profile_path = _find_profile(project_root, state["profile"])
@@ -398,6 +520,15 @@ def cmd_resume(args: argparse.Namespace) -> int:
         elif a["status"] == "running":
             # An agent stuck in "running" after a crash should be re-dispatched
             resumable.append(a)
+        elif a["status"] == "interrupted":
+            # H2: interrupted agents are treated like stale running agents
+            interrupt_reason = a.get("interrupt_reason", "unknown")
+            print(
+                f"{_YELLOW}INFO:{_RESET} Agent '{a['agent_id']}' was "
+                f"interrupted (reason: {interrupt_reason}). Scheduling re-dispatch.",
+                file=sys.stderr,
+            )
+            resumable.append(a)
 
     if not resumable:
         print(f"{_GREEN}✅ No agents need to be re-dispatched.{_RESET}")
@@ -411,6 +542,9 @@ def cmd_resume(args: argparse.Namespace) -> int:
             reason = f" {_DIM}(retry {a.get('retries', 0)}/{max_retries}){_RESET}"
         elif a["status"] == "running":
             reason = f" {_DIM}(stale – was running at crash){_RESET}"
+        elif a["status"] == "interrupted":
+            ir = a.get("interrupt_reason", "unknown")
+            reason = f" {_DIM}(interrupted – {ir}){_RESET}"
         print(
             f"  {colour}{emoji}{_RESET} {a['agent_id']:<20s} "
             f"{_DIM}[{a['role']}]{_RESET}  "
@@ -422,6 +556,14 @@ def cmd_resume(args: argparse.Namespace) -> int:
     print(f"\n{_DIM}Machine-readable agent IDs:{_RESET}")
     for a in resumable:
         print(a["agent_id"])
+
+    # Include divergence metadata in output for downstream consumers
+    if divergence_delta is not None or stale_hours is not None:
+        print(f"\n{_DIM}Resume metadata:{_RESET}")
+        if divergence_delta is not None:
+            print(f"  main_branch_diverged_commits: {divergence_delta}")
+        if stale_hours is not None:
+            print(f"  state_age_hours: {stale_hours:.1f}")
 
     print()
     return 0
@@ -478,6 +620,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="New status",
     )
     p_upd.add_argument("--output-path", default=None, help="Path to agent output")
+    p_upd.add_argument(
+        "--interrupt-reason", default=None, dest="interrupt_reason",
+        help="Reason for interruption (e.g. quota_exhausted)",
+    )
+    p_upd.add_argument(
+        "--failure-strategy", default=None, dest="failure_strategy",
+        choices=["all_or_nothing"],
+        help="Override failure strategy for run-status recomputation",
+    )
 
     # -- status -------------------------------------------------------------
     p_stat = subparsers.add_parser("status", help="Show orchestration status summary")

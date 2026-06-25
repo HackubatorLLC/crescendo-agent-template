@@ -15,7 +15,78 @@
       "cross_agent_visibility": true
     }
   },
-  "agent_archetypes": [],
+  "agent_archetypes": [
+    {
+      "role": "string_extractor",
+      "system_prompt_template": "You are a string extractor who identifies and extracts all translatable strings from source code and resources. Produce structured catalogs preserving context and placeholders.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "json",
+      "claims_required": true
+    },
+    {
+      "role": "locale_coordinator",
+      "system_prompt_template": "You are a locale coordinator who manages the translation workflow across target locales, tracks completion status, and ensures consistency between language variants.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "translator",
+      "system_prompt_template": "You are a translator who produces accurate, natural-sounding translations for the assigned locale. Preserve meaning, tone, and technical terminology while adapting to cultural context.",
+      "context_files": ["conductor/product.md"],
+      "output_format": "json",
+      "claims_required": true
+    },
+    {
+      "role": "cultural_reviewer",
+      "system_prompt_template": "You are a cultural reviewer who evaluates translations for cultural appropriateness, sensitivity, and local conventions. Flag content that may be offensive or confusing in the target culture.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "terminology_manager",
+      "system_prompt_template": "You are a terminology manager who maintains glossaries and ensures consistent use of key terms across all locales. Resolve terminology conflicts and update reference dictionaries.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "json",
+      "claims_required": true
+    },
+    {
+      "role": "format_validator",
+      "system_prompt_template": "You are a format validator who checks translated strings for correct placeholders, date/number formats, string length constraints, and encoding compliance.",
+      "context_files": ["conductor/tech-stack.md"],
+      "output_format": "json",
+      "claims_required": true
+    },
+    {
+      "role": "screenshot_comparator",
+      "system_prompt_template": "You are a screenshot comparator who visually compares rendered UI across locales to detect layout breaks, text truncation, and rendering issues caused by translation.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "rtl_specialist",
+      "system_prompt_template": "You are an RTL specialist who validates right-to-left language rendering, bidi text handling, and layout mirroring for Arabic, Hebrew, and other RTL locales.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "pluralization_auditor",
+      "system_prompt_template": "You are a pluralization auditor who verifies correct plural form handling across locales with different pluralization rules. Ensure CLDR plural categories are properly implemented.",
+      "context_files": ["conductor/tech-stack.md"],
+      "output_format": "json",
+      "claims_required": true
+    },
+    {
+      "role": "regression_tester",
+      "system_prompt_template": "You are a regression tester who validates that localization changes do not break existing translations or introduce regressions in previously approved strings.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    }
+  ],
   "shared_truth": {
     "product": "conductor/product.md",
     "tech_stack": "conductor/tech-stack.md",
@@ -30,10 +101,12 @@
     "reviewer_agent": "localization_lead"
   },
   "budget": {
-    "max_agents": 10,
+    "mode": "quota_based",
+    "suggested_max_agents": 10,
     "budget_limit_usd": 4.00,
     "cost_estimation_before_dispatch": true,
-    "circuit_breaker_token_limit": 400000
+    "circuit_breaker_token_limit": 400000,
+    "max_total_retries_per_phase": 6
   },
   "phases": [
     {
@@ -83,6 +156,7 @@
     "claims_schema": "entity-attribute-value"
   },
   "model_routing": {
+    "status": "advisory",
     "strategy": "capability_matched",
     "roles": {
       "coordinator": {
@@ -112,7 +186,33 @@
     },
     "session_awareness": {
       "track_usage_per_model": true,
-      "auto_fallback_on_limit": true
+      "auto_fallback_on_limit": false
+    }
+  },
+  "autonomy": {
+    "level": "full",
+    "pre_flight": {
+      "estimate_tokens": true,
+      "confirm_commit_scope": true
+    },
+    "during_execution": {
+      "on_gate_failure": "retry_then_skip",
+      "on_ambiguity": "best_judgment",
+      "on_merge_conflict": "write_state_and_stop",
+      "on_quota_exhaustion": "estimate_then_wait_then_stop",
+      "on_agent_error": "retry_then_flag",
+      "heuristic_gates_blocking": "derived"
+    },
+    "model_strategy": {
+      "preference": "single_session",
+      "recommended_for_autonomous": "gemini-3.1-pro-high"
+    },
+    "post_run": {
+      "generate_report": true,
+      "flag_items_for_review": true,
+      "auto_commit": true,
+      "auto_merge_to_main": false,
+      "merge_to_main_requires_all_gates_pass": true
     }
   }
 }

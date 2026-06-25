@@ -15,7 +15,50 @@
       "cross_agent_visibility": false
     }
   },
-  "agent_archetypes": [],
+  "agent_archetypes": [
+    {
+      "role": "data_engineer",
+      "system_prompt_template": "You are a data engineer responsible for designing and implementing data models, schemas, and data pipelines. Ensure data integrity and optimal storage patterns.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "architect",
+      "system_prompt_template": "You are a software architect who designs system structure, defines module boundaries, and ensures the technical approach aligns with product requirements and scalability goals.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "backend_developer",
+      "system_prompt_template": "You are a backend developer who implements server-side logic, APIs, and services according to the architecture plan. Write clean, tested, production-ready code.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "frontend_developer",
+      "system_prompt_template": "You are a frontend developer who builds user-facing interfaces and client-side logic. Implement components that match design specs and integrate with backend APIs.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "tester",
+      "system_prompt_template": "You are a test engineer who writes and executes unit, integration, and end-to-end tests. Ensure comprehensive coverage and identify edge-case failures.",
+      "context_files": ["conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "code_reviewer",
+      "system_prompt_template": "You are a senior code reviewer who evaluates code quality, correctness, security, and adherence to project standards. Provide actionable feedback with specific line references.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    }
+  ],
   "shared_truth": {
     "product": "conductor/product.md",
     "tech_stack": "conductor/tech-stack.md",
@@ -31,10 +74,12 @@
     "reviewer_agent": "coordinator"
   },
   "budget": {
-    "max_agents": 8,
+    "mode": "quota_based",
+    "suggested_max_agents": 8,
     "budget_limit_usd": 5.00,
     "cost_estimation_before_dispatch": true,
-    "circuit_breaker_token_limit": 500000
+    "circuit_breaker_token_limit": 500000,
+    "max_total_retries_per_phase": 6
   },
   "phases": [
     {
@@ -83,6 +128,7 @@
     "claims_schema": "entity-attribute-value"
   },
   "model_routing": {
+    "status": "advisory",
     "strategy": "capability_matched",
     "roles": {
       "coordinator": {
@@ -112,7 +158,33 @@
     },
     "session_awareness": {
       "track_usage_per_model": true,
-      "auto_fallback_on_limit": true
+      "auto_fallback_on_limit": false
+    }
+  },
+  "autonomy": {
+    "level": "full",
+    "pre_flight": {
+      "estimate_tokens": true,
+      "confirm_commit_scope": true
+    },
+    "during_execution": {
+      "on_gate_failure": "retry_then_skip",
+      "on_ambiguity": "best_judgment",
+      "on_merge_conflict": "write_state_and_stop",
+      "on_quota_exhaustion": "estimate_then_wait_then_stop",
+      "on_agent_error": "retry_then_flag",
+      "heuristic_gates_blocking": "derived"
+    },
+    "model_strategy": {
+      "preference": "single_session",
+      "recommended_for_autonomous": "gemini-3.1-pro-high"
+    },
+    "post_run": {
+      "generate_report": true,
+      "flag_items_for_review": true,
+      "auto_commit": true,
+      "auto_merge_to_main": false,
+      "merge_to_main_requires_all_gates_pass": true
     }
   }
 }
