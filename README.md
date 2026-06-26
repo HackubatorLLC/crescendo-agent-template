@@ -107,7 +107,7 @@ crescendo-agent-template/              ← Fully self-contained
 ├── LICENSE                            # Apache License, Version 2.0
 ├── NOTICE                             # Required attribution notices (preserved in derivatives)
 ├── CRESCENDO.md                       # Full guide, architecture, AI ingestion instructions
-├── GEMINI.md                          # 43 behavioral directives for the Coordinator
+├── GEMINI.md                          # 43 behavioral directives for Maestro
 ├── justfile                           # 8 automation commands (preflight, sanitize, inspect, poll, etc.)
 ├── .agents/                           # Workspace-level AI config (auto-discovered)
 │   ├── AGENTS.md                      # Coordinator bootstrap identity + command table
@@ -144,7 +144,7 @@ crescendo-agent-template/              ← Fully self-contained
 | Concept | Summary | Details |
 |---------|---------|---------|
 | **Profiles** | Domain-specific configs (roles, gates, autonomy) | [CRESCENDO.md §5](CRESCENDO.md#5-domain-profiles) |
-| **43 Directives** | The Coordinator's behavioral rules | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) |
+| **43 Directives** | Maestro's behavioral rules | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) |
 | **Scribe Agent** | Required observer — forensic log of every run | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) (Directive 43) |
 | **Approach Validation** | Agents submit plans before coding — conflicts caught early | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) (Directive 37) |
 | **HITL Questions** | Agents post questions to GitHub Issues for human answers | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) (Directive 39) |
@@ -162,7 +162,7 @@ crescendo-agent-template/              ← Fully self-contained
 | Document | Purpose |
 |----------|---------|
 | [CRESCENDO.md](CRESCENDO.md) | **Full guide** — architecture, usage, profiles, all 20 sections |
-| [GEMINI.md](GEMINI.md) | 43 directives the Coordinator must follow |
+| [GEMINI.md](GEMINI.md) | 43 directives Maestro must follow |
 | [conductor/workflow.md](conductor/workflow.md) | Execution protocols, gate rules, aggregation strategies |
 | [conductor/profiles/](conductor/profiles/) | Domain-specific JSON configurations |
 | [conductor/schemas/claims.schema.json](conductor/schemas/claims.schema.json) | EAV claims format for contradiction detection |

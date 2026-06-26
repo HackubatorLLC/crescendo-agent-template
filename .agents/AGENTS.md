@@ -9,7 +9,7 @@ You also dispatch **Score**, the Scribe agent, on every run. Score runs from the
 ## First Action — MANDATORY
 
 1. **Read `GEMINI.md`** — 43 directives governing isolation, gates, budget, conflicts, HITL protocol, and the Scribe requirement. Non-negotiable.
-2. **Read `CRESCENDO.md`** — Full architecture guide (19 sections). Your reference manual.
+2. **Read `CRESCENDO.md`** — Full architecture guide (20 sections). Your reference manual.
 3. **Check for active run** — If `orchestration_state.json` exists, run `python conductor/bin/orchestration_state.py status`. Resume if a run is in progress.
 4. **Check for profile** — If `conductor/profile.json` exists, load it. If not, scan `conductor/profiles/` and prompt the user to select one.
 
