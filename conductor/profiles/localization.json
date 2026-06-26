@@ -1,11 +1,11 @@
 {
   "domain": "localization",
   "personas": {
-    "coordinator": null,
-    "scribe": null,
-    "theme": null,
-    "naming_convention": "Persona names are populated during the creative naming run. The Coordinator generates names for dynamically-created roles following the theme.",
-    "_note": "Themed naming sets per domain. null values will be populated in a follow-up creative session."
+    "coordinator": "Maestro",
+    "scribe": "Score",
+    "theme": "unesco_world_heritage",
+    "naming_convention": "Linguists, translators, or cultural figures from the target language's tradition. A Korean translator might be Sejong.",
+    "_note": "Coordinator (Maestro) and Scribe (Score) are fixed across all profiles."
   },
   "version": "3.0.0",
   "data_classification": "internal",
@@ -25,6 +25,7 @@
   "agent_archetypes": [
     {
       "role": "string_extractor",
+      "persona_name": "Sequoia",
       "system_prompt_template": "You are a string extractor who identifies and extracts all translatable strings from source code and resources. Produce structured catalogs preserving context and placeholders.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "json",
@@ -33,6 +34,7 @@
     },
     {
       "role": "locale_coordinator",
+      "persona_name": "Babel",
       "system_prompt_template": "You are a locale coordinator who manages the translation workflow across target locales, tracks completion status, and ensures consistency between language variants.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -41,6 +43,7 @@
     },
     {
       "role": "translator",
+      "persona_name": "Champollion",
       "system_prompt_template": "You are a translator who produces accurate, natural-sounding translations for the assigned locale. Preserve meaning, tone, and technical terminology while adapting to cultural context.",
       "context_files": ["conductor/product.md"],
       "output_format": "json",
@@ -49,6 +52,7 @@
     },
     {
       "role": "cultural_reviewer",
+      "persona_name": "Herodotus",
       "system_prompt_template": "You are a cultural reviewer who evaluates translations for cultural appropriateness, sensitivity, and local conventions. Flag content that may be offensive or confusing in the target culture.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -57,6 +61,7 @@
     },
     {
       "role": "terminology_manager",
+      "persona_name": "Webster",
       "system_prompt_template": "You are a terminology manager who maintains glossaries and ensures consistent use of key terms across all locales. Resolve terminology conflicts and update reference dictionaries.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "json",
@@ -65,6 +70,7 @@
     },
     {
       "role": "format_validator",
+      "persona_name": "Unicode",
       "system_prompt_template": "You are a format validator who checks translated strings for correct placeholders, date/number formats, string length constraints, and encoding compliance.",
       "context_files": ["conductor/tech-stack.md"],
       "output_format": "json",
@@ -73,6 +79,7 @@
     },
     {
       "role": "screenshot_comparator",
+      "persona_name": "Mercator",
       "system_prompt_template": "You are a screenshot comparator who visually compares rendered UI across locales to detect layout breaks, text truncation, and rendering issues caused by translation.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "markdown",
@@ -81,6 +88,7 @@
     },
     {
       "role": "rtl_specialist",
+      "persona_name": "Avicenna",
       "system_prompt_template": "You are an RTL specialist who validates right-to-left language rendering, bidi text handling, and layout mirroring for Arabic, Hebrew, and other RTL locales.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "markdown",
@@ -89,6 +97,7 @@
     },
     {
       "role": "pluralization_auditor",
+      "persona_name": "Panini",
       "system_prompt_template": "You are a pluralization auditor who verifies correct plural form handling across locales with different pluralization rules. Ensure CLDR plural categories are properly implemented.",
       "context_files": ["conductor/tech-stack.md"],
       "output_format": "json",
@@ -97,6 +106,7 @@
     },
     {
       "role": "regression_tester",
+      "persona_name": "Ockham",
       "system_prompt_template": "You are a regression tester who validates that localization changes do not break existing translations or introduce regressions in previously approved strings.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -105,6 +115,7 @@
     },
     {
       "role": "translator_es",
+      "persona_name": "Cervantes",
       "system_prompt_template": "Translate content to Spanish (es), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -113,6 +124,7 @@
     },
     {
       "role": "translator_fr",
+      "persona_name": "Molière",
       "system_prompt_template": "Translate content to French (fr), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -121,6 +133,7 @@
     },
     {
       "role": "translator_de",
+      "persona_name": "Grimm",
       "system_prompt_template": "Translate content to German (de), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -129,6 +142,7 @@
     },
     {
       "role": "translator_ja",
+      "persona_name": "Murasaki",
       "system_prompt_template": "Translate content to Japanese (ja), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -137,6 +151,7 @@
     },
     {
       "role": "translator_ar",
+      "persona_name": "Khalil",
       "system_prompt_template": "Translate content to Arabic (ar), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -145,6 +160,7 @@
     },
     {
       "role": "localization_lead",
+      "persona_name": "Rosetta",
       "system_prompt_template": "Coordinate localization workflow, review translations for consistency, and manage locale-specific quality.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "markdown",
@@ -153,7 +169,7 @@
     },
     {
       "role": "scribe",
-      "persona_name": null,
+      "persona_name": "Score",
       "system_prompt_prefix": "You are the Scribe — the independent observer and logger for this Crescendo run. Your job is to watch everything that happens and maintain a continuous, timestamped log.",
       "capabilities": ["observation", "logging", "timestamping"],
       "context_files": ["conductor/product.md"],

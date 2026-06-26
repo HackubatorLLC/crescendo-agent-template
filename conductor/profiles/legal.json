@@ -1,11 +1,11 @@
 {
   "domain": "legal",
   "personas": {
-    "coordinator": null,
-    "scribe": null,
-    "theme": null,
-    "naming_convention": "Persona names are populated during the creative naming run. The Coordinator generates names for dynamically-created roles following the theme.",
-    "_note": "Themed naming sets per domain. null values will be populated in a follow-up creative session."
+    "coordinator": "Maestro",
+    "scribe": "Score",
+    "theme": "roman_jurists",
+    "naming_convention": "Latin-rooted names or Roman historical figures. Derive from the Latin root of the role's function.",
+    "_note": "Coordinator (Maestro) and Scribe (Score) are fixed across all profiles."
   },
   "version": "3.0.0",
   "data_classification": "confidential",
@@ -25,6 +25,7 @@
   "agent_archetypes": [
     {
       "role": "classifier",
+      "persona_name": "Sortera",
       "system_prompt_template": "You are a legal classifier who categorizes incoming issues by type, jurisdiction, and urgency. Route matters to the appropriate specialist for analysis.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "json",
@@ -33,6 +34,7 @@
     },
     {
       "role": "legal_analyst",
+      "persona_name": "Advocata",
       "system_prompt_template": "You are a legal analyst who researches statutes, case law, and regulatory frameworks relevant to the matter. Produce structured analysis with citations.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "markdown",
@@ -41,6 +43,7 @@
     },
     {
       "role": "compliance_officer",
+      "persona_name": "Regulus",
       "system_prompt_template": "You are a compliance officer who reviews deliverables against regulatory requirements and internal policies. Flag non-compliant items with specific rule references.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -49,6 +52,7 @@
     },
     {
       "role": "senior_counsel",
+      "persona_name": "Seneca",
       "system_prompt_template": "You are senior counsel providing final legal review and sign-off. Assess risk, validate analysis quality, and ensure all compliance requirements are met.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -57,6 +61,7 @@
     },
     {
       "role": "intake_analyst",
+      "persona_name": "Portia",
       "system_prompt_template": "Perform initial intake analysis, categorize documents, and identify key legal issues for downstream analysis.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -65,6 +70,7 @@
     },
     {
       "role": "contract_analyst",
+      "persona_name": "Claudia",
       "system_prompt_template": "Analyze contract terms, identify risks, obligations, and non-standard clauses.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -73,6 +79,7 @@
     },
     {
       "role": "regulatory_analyst",
+      "persona_name": "Lexana",
       "system_prompt_template": "Evaluate regulatory compliance requirements and identify applicable regulations.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -81,6 +88,7 @@
     },
     {
       "role": "case_researcher",
+      "persona_name": "Cicero",
       "system_prompt_template": "Research relevant case law, precedents, and statutory interpretations.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -89,6 +97,7 @@
     },
     {
       "role": "general_counsel",
+      "persona_name": "Praetor",
       "system_prompt_template": "Provide final legal review, synthesize analysis outputs, and produce authoritative legal recommendations.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -97,7 +106,7 @@
     },
     {
       "role": "scribe",
-      "persona_name": null,
+      "persona_name": "Score",
       "system_prompt_prefix": "You are the Scribe — the independent observer and logger for this Crescendo run. Your job is to watch everything that happens and maintain a continuous, timestamped log.",
       "capabilities": ["observation", "logging", "timestamping"],
       "context_files": ["conductor/product.md"],

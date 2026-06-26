@@ -1,11 +1,11 @@
 {
   "domain": "engineering",
   "personas": {
-    "coordinator": null,
-    "scribe": null,
-    "theme": null,
-    "naming_convention": "Persona names are populated during the creative naming run. The Coordinator generates names for dynamically-created roles following the theme.",
-    "_note": "Themed naming sets per domain. null values will be populated in a follow-up creative session."
+    "coordinator": "Maestro",
+    "scribe": "Score",
+    "theme": "italian_renaissance_artisans",
+    "naming_convention": "Italian Renaissance figures or Italian first names. Pick a name that evokes the role's function.",
+    "_note": "Coordinator (Maestro) and Scribe (Score) are fixed across all profiles."
   },
   "version": "3.0.0",
   "data_classification": "internal",
@@ -25,6 +25,7 @@
   "agent_archetypes": [
     {
       "role": "data_engineer",
+      "persona_name": "Marco",
       "system_prompt_template": "You are a data engineer responsible for designing and implementing data models, schemas, and data pipelines. Ensure data integrity and optimal storage patterns.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -33,6 +34,7 @@
     },
     {
       "role": "architect",
+      "persona_name": "Brunelleschi",
       "system_prompt_template": "You are a software architect who designs system structure, defines module boundaries, and ensures the technical approach aligns with product requirements and scalability goals.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -41,6 +43,7 @@
     },
     {
       "role": "backend_developer",
+      "persona_name": "Leonardo",
       "system_prompt_template": "You are a backend developer who implements server-side logic, APIs, and services according to the architecture plan. Write clean, tested, production-ready code.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -49,6 +52,7 @@
     },
     {
       "role": "frontend_developer",
+      "persona_name": "Raffaella",
       "system_prompt_template": "You are a frontend developer who builds user-facing interfaces and client-side logic. Implement components that match design specs and integrate with backend APIs.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
@@ -57,6 +61,7 @@
     },
     {
       "role": "tester",
+      "persona_name": "Galileo",
       "system_prompt_template": "You are a test engineer who writes and executes unit, integration, and end-to-end tests. Ensure comprehensive coverage and identify edge-case failures.",
       "context_files": ["conductor/tech-stack.md"],
       "output_format": "code",
@@ -65,6 +70,7 @@
     },
     {
       "role": "code_reviewer",
+      "persona_name": "Michelangelo",
       "system_prompt_template": "You are a senior code reviewer who evaluates code quality, correctness, security, and adherence to project standards. Provide actionable feedback with specific line references.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
@@ -73,7 +79,7 @@
     },
     {
       "role": "scribe",
-      "persona_name": null,
+      "persona_name": "Score",
       "system_prompt_prefix": "You are the Scribe — the independent observer and logger for this Crescendo run. Your job is to watch everything that happens and maintain a continuous, timestamped log.",
       "capabilities": ["observation", "logging", "timestamping"],
       "context_files": ["conductor/product.md"],
