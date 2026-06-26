@@ -3,3 +3,12 @@ node_modules/
 .env
 .venv/
 __pycache__/
+
+# Crescendo runtime generated
+orchestration_state.json
+run_report.md
+contradiction_report.md
+resumption_briefing.md
+input/.sanitized/
+conductor/archive/
+*.gate_results.json

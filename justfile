@@ -34,3 +34,7 @@ init-worktree track_id role:
 # Sanitize all files in input/ — strips prompt injections, invisible chars, HTML comments
 sanitize-inputs:
     python conductor/bin/sanitize_inputs.py
+
+# Run pre-flight infrastructure check before a Crescendo run
+preflight:
+    python conductor/bin/preflight_check.py
