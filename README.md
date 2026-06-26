@@ -188,7 +188,7 @@ Crescendo was built on the shoulders of an open-source community. The following 
 
 ## License
 
-Copyright 2026 Irongate Property Collective
+Copyright 2026 Hackubator LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
