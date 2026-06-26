@@ -1,6 +1,6 @@
 # Crescendo: The Multi-Agent Orchestration Framework
 
-> **Last Updated:** 2026-06-26 · **Version:** 3.1.0 · **Template SHA:** `94e83e3` · **Adversarial Status:** Clean (5 passes, 42/42 resolved)
+> **Last Updated:** 2026-06-26 · **Version:** 3.1.0 · **Template SHA:** `94e83e3` · **Adversarial Status:** Clean (5 passes, all findings resolved)
 
 ---
 
@@ -81,8 +81,8 @@ Crescendo is not a library. It is not a SaaS product. It is a **template reposit
 ```
 crescendo-agent-template/              ← FULLY SELF-CONTAINED
 ├── README.md                          # Quick start guide + prerequisites
-├── GEMINI.md                          # 36 numbered directives (the Coordinator's rules)
-├── justfile                           # 4 automation commands
+├── GEMINI.md                          # 43 numbered directives (the Coordinator's rules)
+├── justfile                           # 8 automation commands
 ├── .agents/                           # Workspace-level AI config (auto-discovered)
 │   ├── AGENTS.md                      # 7 workspace rules for all agents
 │   └── skills/                        # 9 packaged skills (zero external dependencies)
@@ -310,9 +310,9 @@ Profiles support inheritance and mixins:
 
 ---
 
-## 6. The 36 Directives (GEMINI.md)
+## 6. The 43 directives (GEMINI.md)
 
-The Coordinator follows 36 numbered directives organized into 12 sections. These are the **laws** of the system — they define what the Coordinator must and must not do.
+The Coordinator follows 43 numbered directives organized into 12 sections. These are the **laws** of the system — they define what the Coordinator must and must not do.
 
 ### Autonomous Mode Override
 When `autonomy.level` is `full`, directives 11, 14, 15, and 17 are superseded by the profile's `during_execution` policies. All bypassed decisions are logged to `run_report.md`.
@@ -334,6 +334,10 @@ When `autonomy.level` is `full`, directives 11, 14, 15, and 17 are superseded by
 | 28–29 | **Output Contracts** | Structured claims (EAV), contradiction detection layers |
 | 30–32 | **Model Routing** | Advisory model preferences, fallback logging, session token tracking |
 | 33–36 | **Aggregation** | git_merge, editorial_merge, document_assembly, matrix_assembly |
+| 37–38 | **Live Conflict Detection** | Approach validation before implementation, terminate conflicting agents |
+| 39–40 | **HITL Question Protocol** | GHI for clarification (`[QUESTION][<AgentName>]`), Coordinator polls answers |
+| 41–42 | **Attribution & Safety** | GHI comment signing, `.env` safety |
+| 43 | **Scribe Agent** | Required observer — forensic log at `scribe_log.md` |
 
 ---
 
@@ -701,6 +705,9 @@ Agents must **only** read from `input/.sanitized/`. Binary files (PDF, DOCX, XLS
 | `just git-status-condutree` | View status of all active agent worktrees |
 | `just init-worktree <track_id> <role>` | Create an isolated agent workspace with read-only conductor config |
 | `just sanitize-inputs` | Sanitize input files for agent consumption |
+| `just inspect` | Inspect active tracks, agents, and questions across all worktrees |
+| `just inspect-all` | Inspect ALL tracks (including completed) in compact one-line format |
+| `just poll-questions` | Poll GitHub Issues for human answers to agent questions |
 
 ---
 
@@ -719,7 +726,7 @@ Agents must **only** read from `input/.sanitized/`. Binary files (PDF, DOCX, XLS
 
 ### Key Milestones
 
-- **v3.0.0** — 5 domain profiles, 36 directives, 3-layer quota recovery
+- **v3.0.0** — 5 domain profiles, 43 directives, 3-layer quota recovery
 - **v3.1.0** — Self-contained packaging (9 skills, preflight check, README)
 
 ### Key Fixes Shipped
@@ -759,7 +766,7 @@ When a user clones the template and sets it as their Antigravity workspace, the 
    └── 9 skills become available (conductor-*, worktree, init)
 
 3. AI reads GEMINI.md                          ← INSTRUCTED BY AGENTS.md
-   └── 36 numbered directives (isolation, gates, budget, failures)
+   └── 43 numbered directives (isolation, gates, budget, failures)
 
 4. AI reads CRESCENDO.md                       ← INSTRUCTED BY AGENTS.MD
    └── Full architecture reference (19 sections)
@@ -809,7 +816,7 @@ Any ❌ item includes a fix suggestion.
 If you are an AI agent reading this document to understand Crescendo:
 
 1. **Run preflight** — `python conductor/bin/preflight_check.py` to verify all infrastructure is present
-2. **Start with GEMINI.md** — it contains the 36 directives you must follow as a Coordinator
+2. **Start with GEMINI.md** — it contains the 43 directives you must follow as a Coordinator
 3. **Read the profile** — `conductor/profile.json` defines your domain, roles, phases, and autonomy level
 4. **Check orchestration state** — run `orchestration_state.py status` to see if there's a run in progress
 5. **Respect the hierarchy**: Profile > GEMINI.md > workflow.md > your judgment

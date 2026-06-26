@@ -105,7 +105,7 @@ The Coordinator can also **create new roles on the fly** based on project needs 
 crescendo-agent-template/              ← Fully self-contained
 ├── README.md                          # This file
 ├── CRESCENDO.md                       # Full guide, architecture, AI ingestion instructions
-├── GEMINI.md                          # 36 behavioral directives for the Coordinator
+├── GEMINI.md                          # 43 behavioral directives for the Coordinator
 ├── justfile                           # Automation commands (preflight, sanitize, status, worktree)
 ├── .agents/                           # Workspace-level AI config (auto-discovered)
 │   ├── AGENTS.md                      # 7 workspace rules for all agents
@@ -142,7 +142,7 @@ crescendo-agent-template/              ← Fully self-contained
 | Concept | Summary | Details |
 |---------|---------|---------|
 | **Profiles** | Domain-specific configs (roles, gates, autonomy) | [CRESCENDO.md §5](CRESCENDO.md#5-domain-profiles) |
-| **36 Directives** | The Coordinator's behavioral rules | [CRESCENDO.md §6](CRESCENDO.md#6-the-36-directives-geminimd) |
+| **43 Directives** | The Coordinator's behavioral rules | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) |
 | **Quality Gates** | Deterministic + heuristic checks before merge | [CRESCENDO.md §7](CRESCENDO.md#7-quality-gates) |
 | **Autonomy Levels** | Full / Checkpoint / Supervised | [CRESCENDO.md §8](CRESCENDO.md#8-autonomy-system) |
 | **Quota Recovery** | 3-layer system (estimate → wait → stop) | [CRESCENDO.md §10](CRESCENDO.md#10-quota-recovery-system) |
@@ -157,7 +157,7 @@ crescendo-agent-template/              ← Fully self-contained
 | Document | Purpose |
 |----------|---------|
 | [CRESCENDO.md](CRESCENDO.md) | **Full guide** — architecture, usage, profiles, all 19 sections |
-| [GEMINI.md](GEMINI.md) | 36 directives the Coordinator must follow |
+| [GEMINI.md](GEMINI.md) | 43 directives the Coordinator must follow |
 | [conductor/workflow.md](conductor/workflow.md) | Execution protocols, gate rules, aggregation strategies |
 | [conductor/profiles/](conductor/profiles/) | Domain-specific JSON configurations |
 | [conductor/schemas/claims.schema.json](conductor/schemas/claims.schema.json) | EAV claims format for contradiction detection |

@@ -1,5 +1,12 @@
 {
   "domain": "engineering",
+  "personas": {
+    "coordinator": null,
+    "scribe": null,
+    "theme": null,
+    "naming_convention": "Persona names are populated during the creative naming run. The Coordinator generates names for dynamically-created roles following the theme.",
+    "_note": "Themed naming sets per domain. null values will be populated in a follow-up creative session."
+  },
   "version": "3.0.0",
   "data_classification": "internal",
   "composition": {
@@ -63,6 +70,15 @@
       "output_format": "markdown",
       "claims_required": true,
       "phase_binding": "auto"
+    },
+    {
+      "role": "scribe",
+      "persona_name": null,
+      "system_prompt_prefix": "You are the Scribe — the independent observer and logger for this Crescendo run. Your job is to watch everything that happens and maintain a continuous, timestamped log.",
+      "capabilities": ["observation", "logging", "timestamping"],
+      "context_files": ["conductor/product.md"],
+      "phase_binding": "all",
+      "output_format": "markdown", "claims_required": false, "_note": "Required in every run. Runs from main checkout (not worktree). Writes to scribe_log.md at repo root."
     }
   ],
   "shared_truth": {
