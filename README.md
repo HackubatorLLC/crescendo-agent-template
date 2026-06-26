@@ -2,7 +2,7 @@
 
 **A multi-agent orchestration framework for [Antigravity](https://github.com/google-deepmind/antigravity).**
 
-Crescendo scales AI work horizontally across any domain. A Coordinator Agent dispatches parallel Subagents — each isolated in its own workspace, each focused on a specific role — then merges their work through automated quality gates and contradiction detection. The same orchestration engine powers software engineering, legal analysis, marketing campaigns, academic research, and localization.
+Crescendo scales AI work horizontally across any domain. The Coordinator Agent (**Maestro**) dispatches parallel Subagents — each isolated in its own workspace, each focused on a specific role — then merges their work through automated quality gates and contradiction detection. A dedicated Scribe Agent (**Score**) runs alongside, maintaining a forensic log. The same orchestration engine powers software engineering, legal analysis, marketing campaigns, academic research, and localization.
 
 > 📖 **For the full guide, architecture details, and AI ingestion instructions, see [CRESCENDO.md](CRESCENDO.md).**
 
@@ -50,18 +50,18 @@ just sanitize-inputs
 
 > **Note:** Binary files (PDF, DOCX, XLSX) require manual review — they cannot be auto-sanitized.
 
-### 4. Start the Coordinator
+### 4. Start Maestro
 
 Open **Antigravity** and set this project as the active workspace. Then type:
 
 > *"Start the Crescendo workflow."*
 
-The Coordinator will:
+Maestro will:
 1. Prompt you to **select a domain profile** (engineering, legal, marketing, research, or localization)
 2. Parse your sanitized inputs
 3. Break the work into tracks and tasks
 4. Present a **pre-flight briefing** for your approval (agent count, quota estimate, commit scope, autonomy level)
-5. Dispatch agents in parallel phases once you approve
+5. Dispatch Score (Scribe) and domain agents in parallel phases once you approve
 
 ### 5. Monitor & Resume
 
@@ -69,7 +69,7 @@ The Coordinator will:
 just git-status-condutree    # View all agent worktrees
 ```
 
-If the run pauses due to quota limits, start a new session and type: *"Resume Crescendo run."*
+If the run pauses due to quota limits, start a new session and type: *"Resume Crescendo run."* Maestro reads `orchestration_state.json` and picks up where it stopped.
 
 ---
 
@@ -95,7 +95,7 @@ If the run pauses due to quota limits, start a new session and type: *"Resume Cr
 | `research.json` | Academic Research | 11 | Full | matrix_assembly | internal |
 | `localization.json` | Internationalization | 16 | Full | matrix_assembly | internal |
 
-The Coordinator can also **create new roles on the fly** based on project needs — the profile defines the starting roster, not a hard limit.
+Maestro can also **create new roles on the fly** based on project needs — the profile defines the starting roster, not a hard limit. New roles are named following each domain's themed naming convention.
 
 ---
 

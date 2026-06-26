@@ -6,9 +6,9 @@
 
 ## 1. What Is Crescendo?
 
-Crescendo is an **architectural paradigm for scaling AI work horizontally across any domain**. Instead of a single AI agent working sequentially through a task, a **Coordinator Agent** dispatches a "crescendo" of parallel **Subagents** — each isolated in its own workspace, each focused on a specific role — then merges their work through automated quality gates and contradiction detection into a unified result.
+Crescendo is an **architectural paradigm for scaling AI work horizontally across any domain**. Instead of a single AI agent working sequentially through a task, the **Coordinator Agent ("Maestro")** dispatches a "crescendo" of parallel **Subagents** — each isolated in its own workspace, each focused on a specific role — then merges their work through automated quality gates and contradiction detection into a unified result. A dedicated **Scribe Agent ("Score")** runs continuously alongside, maintaining a forensic log of every action.
 
-The Coordinator doesn't just dispatch from a fixed roster. It **reads the domain profile** to understand which roles exist, but it can also **create new roles and personas on the fly** based on the project's needs. If a legal project needs a tax specialist that isn't in the default profile, the Coordinator can define that role, assign it a system prompt, and dispatch it — all without modifying the profile file.
+Maestro doesn't just dispatch from a fixed roster. It **reads the domain profile** to understand which roles exist, but it can also **create new roles and personas on the fly** based on the project's needs. If a legal project needs a tax specialist that isn't in the default profile, Maestro can define that role, assign it a system prompt, and dispatch it — all without modifying the profile file.
 
 The key insight: **the same orchestration pattern works whether you're building software, analyzing legal contracts, producing marketing campaigns, conducting academic research, or localizing an application into 20 languages.** What changes between domains is the *profile* — the roles, the quality gates, the aggregation strategy — not the orchestration engine.
 
@@ -41,7 +41,7 @@ Crescendo is not a library. It is not a SaaS product. It is a **template reposit
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    COORDINATOR AGENT                     │
+│              MAESTRO (Coordinator Agent)                  │
 │   Reads profile.json · Dispatches agents · Runs gates    │
 │   Merges outputs · Manages orchestration_state.json      │
 └─────────┬────────────┬────────────┬─────────────────────┘
@@ -337,7 +337,7 @@ When `autonomy.level` is `full`, directives 11, 14, 15, and 17 are superseded by
 | 37–38 | **Live Conflict Detection** | Approach validation before implementation, terminate conflicting agents |
 | 39–40 | **HITL Question Protocol** | GHI for clarification (`[QUESTION][<AgentName>]`), Coordinator polls answers |
 | 41–42 | **Attribution & Safety** | GHI comment signing, `.env` safety |
-| 43 | **Scribe Agent** | Required observer — forensic log at `scribe_log.md` |
+| 43 | **Scribe Agent (Score)** | Required observer — forensic log at `scribe_log.md` |
 
 ---
 
@@ -590,7 +590,7 @@ Model routing is **advisory** — the Coordinator logs which model it would sele
 
 | Role | Preferred Model | Fallback | Capabilities |
 |------|----------------|----------|-------------|
-| Coordinator | gemini-3.1-pro-high | claude-opus-4.6-thinking | orchestration, planning |
+| Maestro (Coordinator) | gemini-3.1-pro-high | claude-opus-4.6-thinking | orchestration, planning |
 | Worker | gemini-3.1-pro-high | claude-opus-4.6 | code_generation, reasoning |
 | Quality Reviewer | claude-opus-4.6-thinking | gemini-3.1-pro-high | code_review, reasoning |
 | Bookkeeping | gemini-3.1-flash | gemini-3.1-pro-low | summarization |
@@ -749,13 +749,13 @@ Agents must **only** read from `input/.sanitized/`. Binary files (PDF, DOCX, XLS
 
 Crescendo is designed to be **fully self-contained**. Cloning the template gives you everything needed to run — zero external plugin dependencies.
 
-### Bootstrap Chain (How the Coordinator Knows Its Identity)
+### Bootstrap Chain (How Maestro Knows Its Identity)
 
 When a user clones the template and sets it as their Antigravity workspace, the following discovery chain fires automatically:
 
 ```
 1. Antigravity loads .agents/AGENTS.md        ← AUTO-LOADED (workspace rules)
-   ├── Tells the AI: "You are the Crescendo Coordinator"
+   ├── Tells the AI: "You are Maestro, the Crescendo Coordinator"
    ├── First Action: Read GEMINI.md + CRESCENDO.md
    ├── Check for active run (orchestration_state.json)
    ├── Check for selected profile (conductor/profile.json)
