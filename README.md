@@ -104,6 +104,8 @@ Maestro can also **create new roles on the fly** based on project needs — the 
 ```
 crescendo-agent-template/              ← Fully self-contained
 ├── README.md                          # This file
+├── LICENSE                            # Apache License, Version 2.0
+├── NOTICE                             # Required attribution notices (preserved in derivatives)
 ├── CRESCENDO.md                       # Full guide, architecture, AI ingestion instructions
 ├── GEMINI.md                          # 43 behavioral directives for the Coordinator
 ├── justfile                           # 8 automation commands (preflight, sanitize, inspect, poll, etc.)
@@ -186,4 +188,15 @@ Crescendo was built on the shoulders of an open-source community. The following 
 
 ## License
 
-Proprietary — See LICENSE file for details.
+Copyright 2026 Irongate Property Collective
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+> http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the [LICENSE](LICENSE) file for the full license text and the [NOTICE](NOTICE) file for required attribution notices.
