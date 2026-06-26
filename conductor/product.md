@@ -1,6 +1,17 @@
-# IronGate Stewardship Index V1
+# Project Name
 
-## Initial Concept
-A platform for tracking, evaluating, and presenting stewardship indices. The platform utilizes parallel AI agent capabilities to rapidly prototype and test workflows.
+## Overview
 
-This is currently an agnostic setup. The detailed product requirements, user stories, and features will be defined once the project files (e.g. PRD) are dropped into the `input/` folder.
+_This file is shared truth — all agents read it before starting work._
+
+Describe your project here. This placeholder will be replaced during the Crescendo setup
+phase after project files are provided in the `input/` folder.
+
+## Goals
+
+- [ ] Goal 1
+- [ ] Goal 2
+
+## Constraints
+
+- Constraint 1
