@@ -109,11 +109,11 @@
   },
   "budget": {
     "mode": "quota_based",
-    "_budget_note": "budget.mode and budget_limit_usd are interpreted by the Coordinator LLM, not by deterministic scripts. Set mode to 'api_key' only when using direct API keys.",
+    "_budget_note": "In quota_based mode (Antigravity 2.0), budget_limit_usd and circuit_breaker_token_limit are null — the platform quota IS the limit. Set mode to 'api_key' and provide numeric values only when using direct API keys.",
     "suggested_max_agents": 4,
-    "budget_limit_usd": 8.00,
+    "budget_limit_usd": null,
     "cost_estimation_before_dispatch": true,
-    "circuit_breaker_token_limit": 600000,
+    "circuit_breaker_token_limit": null,
     "max_total_retries_per_phase": 6
   },
   "phases": [
