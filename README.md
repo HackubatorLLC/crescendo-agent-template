@@ -106,9 +106,9 @@ crescendo-agent-template/              ← Fully self-contained
 ├── README.md                          # This file
 ├── CRESCENDO.md                       # Full guide, architecture, AI ingestion instructions
 ├── GEMINI.md                          # 43 behavioral directives for the Coordinator
-├── justfile                           # Automation commands (preflight, sanitize, status, worktree)
+├── justfile                           # 8 automation commands (preflight, sanitize, inspect, poll, etc.)
 ├── .agents/                           # Workspace-level AI config (auto-discovered)
-│   ├── AGENTS.md                      # 7 workspace rules for all agents
+│   ├── AGENTS.md                      # Coordinator bootstrap identity + command table
 │   └── skills/                        # 9 packaged skills (zero external dependencies)
 │       ├── using-git-worktrees/       # Worktree isolation protocol
 │       ├── conductor-worktree-hitl/   # Parallel execution + HITL via GitHub Issues
@@ -143,6 +143,9 @@ crescendo-agent-template/              ← Fully self-contained
 |---------|---------|---------|
 | **Profiles** | Domain-specific configs (roles, gates, autonomy) | [CRESCENDO.md §5](CRESCENDO.md#5-domain-profiles) |
 | **43 Directives** | The Coordinator's behavioral rules | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) |
+| **Scribe Agent** | Required observer — forensic log of every run | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) (Directive 43) |
+| **Approach Validation** | Agents submit plans before coding — conflicts caught early | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) (Directive 37) |
+| **HITL Questions** | Agents post questions to GitHub Issues for human answers | [CRESCENDO.md §6](CRESCENDO.md#6-the-43-directives-geminimd) (Directive 39) |
 | **Quality Gates** | Deterministic + heuristic checks before merge | [CRESCENDO.md §7](CRESCENDO.md#7-quality-gates) |
 | **Autonomy Levels** | Full / Checkpoint / Supervised | [CRESCENDO.md §8](CRESCENDO.md#8-autonomy-system) |
 | **Quota Recovery** | 3-layer system (estimate → wait → stop) | [CRESCENDO.md §10](CRESCENDO.md#10-quota-recovery-system) |
