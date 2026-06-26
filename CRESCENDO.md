@@ -742,6 +742,34 @@ Agents must **only** read from `input/.sanitized/`. Binary files (PDF, DOCX, XLS
 
 Crescendo is designed to be **fully self-contained**. Cloning the template gives you everything needed to run — zero external plugin dependencies.
 
+### Bootstrap Chain (How the Coordinator Knows Its Identity)
+
+When a user clones the template and sets it as their Antigravity workspace, the following discovery chain fires automatically:
+
+```
+1. Antigravity loads .agents/AGENTS.md        ← AUTO-LOADED (workspace rules)
+   ├── Tells the AI: "You are the Crescendo Coordinator"
+   ├── First Action: Read GEMINI.md + CRESCENDO.md
+   ├── Check for active run (orchestration_state.json)
+   ├── Check for selected profile (conductor/profile.json)
+   ├── Orchestration loop overview
+   └── Decision hierarchy: Profile > GEMINI.md > workflow.md > judgment
+
+2. Antigravity discovers .agents/skills/      ← AUTO-DISCOVERED
+   └── 9 skills become available (conductor-*, worktree, init)
+
+3. AI reads GEMINI.md                          ← INSTRUCTED BY AGENTS.md
+   └── 36 numbered directives (isolation, gates, budget, failures)
+
+4. AI reads CRESCENDO.md                       ← INSTRUCTED BY AGENTS.MD
+   └── Full architecture reference (19 sections)
+
+5. AI reads conductor/profile.json             ← IF EXISTS
+   └── Domain-specific roles, phases, autonomy, budget
+```
+
+**`.agents/AGENTS.md` is the critical file.** It is the ONLY file Antigravity auto-loads from the workspace. Everything else (GEMINI.md, CRESCENDO.md, profile.json) is discovered because AGENTS.md tells the Coordinator to read it.
+
 ### How Skills Are Discovered
 
 Antigravity auto-discovers skills from `.agents/skills/` relative to the workspace root. When a project cloned from this template is set as the active workspace, all 9 packaged skills are automatically available to the AI.
