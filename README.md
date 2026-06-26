@@ -159,11 +159,28 @@ crescendo-agent-template/              ← Fully self-contained
 
 | Document | Purpose |
 |----------|---------|
-| [CRESCENDO.md](CRESCENDO.md) | **Full guide** — architecture, usage, profiles, all 19 sections |
+| [CRESCENDO.md](CRESCENDO.md) | **Full guide** — architecture, usage, profiles, all 20 sections |
 | [GEMINI.md](GEMINI.md) | 43 directives the Coordinator must follow |
 | [conductor/workflow.md](conductor/workflow.md) | Execution protocols, gate rules, aggregation strategies |
 | [conductor/profiles/](conductor/profiles/) | Domain-specific JSON configurations |
 | [conductor/schemas/claims.schema.json](conductor/schemas/claims.schema.json) | EAV claims format for contradiction detection |
+
+
+---
+
+## Acknowledgments
+
+Crescendo was built on the shoulders of an open-source community. The following people, articles, and repositories were direct inspirations:
+
+| Contributor | Contribution | Link |
+|-------------|-------------|------|
+| **Riccardo Carlesso** ([@palladius](https://github.com/palladius)) | Original "Crescendo of Agents" blog series, `conductor-worktree-hitl` skill, Conductor++ architecture, and the Agostina coordinator concept | [Blog Post (Part 2)](https://ricc.rocks/en/posts/technology/2026-06-16-crescendo-of-agents-part-2/) |
+| **Keith** | Conductor extension — the Rails-like orchestration framework that Crescendo's track system is built on | [gemini-cli-extensions/conductor](https://github.com/gemini-cli-extensions/conductor) |
+| **Barrett Storck** | `gemini-superpowers` plugin, including the `using-git-worktrees` skill for parallel agent isolation | [barretstorck/gemini-superpowers](https://github.com/barretstorck/gemini-superpowers) |
+| **Richard Seroter** | "One prompt, four subagents" article — the parallel subagent dispatch pattern that inspired the architecture | [seroter.com](https://seroter.com/2026/06/01/one-prompt-four-subagents-and-ninety-seconds-to-get-a-working-app/) |
+| **Paul** (AI Positive) | "State on Disk" persistence pattern — how Crescendo survives quota interruptions | [AI Positive Substack](https://aipositive.substack.com/p/how-i-turned-gemini-cli-into-a-multi) |
+
+> The name "Crescendo" and the musical metaphor (Maestro, Score) come from Riccardo's original vision of a "crescendo of agents" — a single coordinator that grows the ensemble from a soloist to a full orchestra.
 
 ---
 
