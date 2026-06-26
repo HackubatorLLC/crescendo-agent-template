@@ -7,6 +7,8 @@ __pycache__/
 # Crescendo runtime generated
 orchestration_state.json
 run_report.md
+scribe_log.md
+conductor/questions.json
 contradiction_report.md
 resumption_briefing.md
 input/.sanitized/

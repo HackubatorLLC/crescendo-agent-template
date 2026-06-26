@@ -74,3 +74,18 @@ The Coordinator MUST log all decisions it would have asked the human about to `r
 34. **editorial_merge**: Human-style editorial pass. The reviewer agent reads all outputs, creates a unified document preserving the best elements of each. Used for marketing/content.
 35. **document_assembly**: Structured assembly of document sections. Each agent's output maps to a specific section. The reviewer ensures cross-references and citations are consistent. Used for legal.
 36. **matrix_assembly**: Outputs are organized into a matrix (e.g., locale × string, topic × source). The reviewer fills gaps and resolves conflicts per cell. Used for research and localization.
+
+## Live Conflict Detection & Agent Termination
+37. **Approach Validation Phase**: Before any agent begins implementation, it MUST send a structured approach summary to the Coordinator describing its planned approach. The Coordinator reviews all approaches within a phase and terminates any agent whose approach conflicts with another before implementation begins. This catches 90% of conflicts at zero waste.
+38. **Live Conflict Termination**: If the Coordinator detects conceptual incompatibilities between running agents (e.g., two agents implementing contradictory approaches for the same system), it MUST: (a) Terminate the agent whose approach is less aligned with `product.md`, (b) Log the termination in the Scribe log with reasoning, (c) Post on the terminated agent's GHI: `[TERMINATED] Reason: <reason>. See #<other-agent-issue>.`, (d) Link/block the terminated agent's GHI against the surviving agent's GHI.
+
+## HITL Question Protocol (GitHub Issues)
+39. **GHI for Clarification**: When a subagent needs clarification on a design choice, UI decision, or logic condition, it MUST post a `[QUESTION][<AgentName>]` comment on its assigned GitHub Issue with a numbered multiple-choice list. The agent writes the question to `metadata.json`'s `active_questions` array and polls every 15 seconds until the answer is synced by `poll_ghi_questions.py`. Agents must NEVER guess — use the HITL protocol.
+40. **Coordinator Polls Questions**: During autonomous runs, the Coordinator MUST periodically run `python conductor/bin/poll_ghi_questions.py` to sync human answers from GitHub Issues back to local `metadata.json` files. Alternatively, delegate this to the Scribe agent.
+
+## Attribution & Safety
+41. **GHI Comment Signing**: All agent comments on GitHub Issues MUST be signed: `-- <AgentName> (<role>) | Crescendo on behalf of <UserName>`. The UserName is collected during pre-flight briefing. Status indicators: ✅ (passed), ❌ (failed), ⏸️ (paused), 🚫 (terminated).
+42. **`.env` Safety**: Never commit `.env` files. If an agent creates or encounters a `.env` file, it MUST be added to `.gitignore` immediately. `.env` files are copied read-only into worktrees by the `init-worktree` command.
+
+## Scribe Agent
+43. **Scribe Is Required**: Every Crescendo run MUST include a Scribe agent. The Scribe runs from the **main checkout** (not a worktree) continuously across all phases, observing agent dispatch, completion, gate results, conflicts, and terminations. It writes a timestamped log to `scribe_log.md` at the repo root. Other agents should notify the Scribe of significant events. For `confidential` or `restricted` data classification profiles, the Scribe logs metadata only (agent names, timestamps, status changes) — never content from agent outputs or shared truth documents.

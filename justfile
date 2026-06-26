@@ -38,3 +38,16 @@ sanitize-inputs:
 # Run pre-flight infrastructure check before a Crescendo run
 preflight:
     python conductor/bin/preflight_check.py
+
+# Inspect active tracks, agents, and questions across all worktrees
+inspect:
+    python conductor/bin/conductor_inspector.py --open
+
+# Inspect ALL tracks (including completed) in compact one-line format
+inspect-all:
+    python conductor/bin/conductor_inspector.py --all --short
+
+# Poll GitHub Issues for human answers to agent questions
+poll-questions:
+    python conductor/bin/poll_ghi_questions.py
+
