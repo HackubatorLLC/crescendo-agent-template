@@ -170,10 +170,18 @@ def gate_unit_tests(project_root: str, gate: Dict[str, Any]) -> GateResult:
     has_package_json = (Path(project_root) / "package.json").exists()
     has_pytest = (
         (Path(project_root) / "pytest.ini").exists()
-        or (Path(project_root) / "setup.cfg").exists()
-        or (Path(project_root) / "pyproject.toml").exists()
-        or any(_find_files(project_root, {".py"}))
-        and _which("pytest")
+        or (
+            (Path(project_root) / "setup.cfg").exists()
+            and _which("pytest")
+        )
+        or (
+            (Path(project_root) / "pyproject.toml").exists()
+            and _which("pytest")
+        )
+        or (
+            any(_find_files(project_root, {".py"}))
+            and _which("pytest")
+        )
     )
 
     if has_package_json:
@@ -480,6 +488,7 @@ def gate_recency_check(
 
 
 def gate_scope_validation(
+    project_root: str,
     output_dir: str,
     commit_scope: Optional[List[str]] = None,
 ) -> GateResult:
@@ -499,7 +508,7 @@ def gate_scope_validation(
             details="No commit_scope provided; skipping scope validation",
         )
 
-    exit_code, output = _run_external(["git", "diff", "--name-only", "HEAD"], os.getcwd())
+    exit_code, output = _run_external(["git", "diff", "--name-only", "HEAD"], project_root)
     if exit_code != 0:
         return GateResult(
             gate_type, required, passed=False,
@@ -532,6 +541,116 @@ def gate_scope_validation(
     )
 
 
+def gate_string_coverage(
+    project_root: str,
+    output_dir: str,
+) -> GateResult:
+    """Check that all locale string files have at least as many keys as the base."""
+    gate_type = "string_coverage"
+    required = False
+
+    # Directories that conventionally hold locale files
+    locale_dir_names = {"locales", "i18n", "translations", "strings"}
+    string_extensions = {".strings", ".xliff", ".po", ".json"}
+
+    # Discover locale directories
+    locale_dirs: List[str] = []
+    for dirpath, dirnames, _ in os.walk(project_root):
+        for d in dirnames:
+            if d.lower() in locale_dir_names:
+                locale_dirs.append(os.path.join(dirpath, d))
+
+    if not locale_dirs:
+        return GateResult(
+            gate_type, required, passed=True, skipped=True,
+            details="No localization directories found (locales/, i18n/, translations/, strings/)",
+        )
+
+    # Collect all string files
+    string_files: List[str] = []
+    for ld in locale_dirs:
+        string_files.extend(_find_files(ld, string_extensions))
+
+    if not string_files:
+        return GateResult(
+            gate_type, required, passed=True, skipped=True,
+            details="Localization directories exist but contain no string files",
+        )
+
+    # Only handle JSON files for key counting (simple & practical)
+    json_files = [f for f in string_files if f.lower().endswith(".json")]
+    if not json_files:
+        return GateResult(
+            gate_type, required, passed=True, skipped=True,
+            details="String files found but none are JSON; key counting not supported for other formats",
+        )
+
+    # Identify base language file (en.json)
+    base_file: Optional[str] = None
+    for jf in json_files:
+        basename = Path(jf).stem.lower()
+        if basename in ("en", "en-us", "en_us"):
+            base_file = jf
+            break
+
+    if base_file is None:
+        return GateResult(
+            gate_type, required, passed=True, skipped=True,
+            details="No base language file (en.json / en-us.json) found to compare against",
+        )
+
+    # Load base key count
+    try:
+        base_data = json.loads(_read_text(base_file))
+    except (json.JSONDecodeError, OSError) as exc:
+        return GateResult(
+            gate_type, required, passed=False,
+            details=f"Failed to parse base file {base_file}: {exc}",
+        )
+
+    if not isinstance(base_data, dict):
+        return GateResult(
+            gate_type, required, passed=True, skipped=True,
+            details=f"Base file {base_file} is not a JSON object; skipping key comparison",
+        )
+
+    base_count = len(base_data)
+    base_rel = os.path.relpath(base_file, project_root)
+    failures: List[str] = []
+
+    for jf in json_files:
+        if jf == base_file:
+            continue
+        try:
+            locale_data = json.loads(_read_text(jf))
+        except (json.JSONDecodeError, OSError):
+            failures.append(f"  {os.path.relpath(jf, project_root)}: failed to parse")
+            continue
+
+        if not isinstance(locale_data, dict):
+            continue
+
+        locale_count = len(locale_data)
+        if locale_count < base_count:
+            rel = os.path.relpath(jf, project_root)
+            missing = base_count - locale_count
+            failures.append(
+                f"  {rel}: {locale_count}/{base_count} keys ({missing} missing)"
+            )
+
+    if failures:
+        detail = (
+            f"Base {base_rel} has {base_count} key(s). "
+            f"{len(failures)} locale(s) incomplete:\n" + "\n".join(failures)
+        )
+        return GateResult(gate_type, required, passed=False, details=detail)
+
+    return GateResult(
+        gate_type, required, passed=True,
+        details=f"All locale JSON files have >= {base_count} key(s) from {base_rel}",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Gate dispatcher
 # ---------------------------------------------------------------------------
@@ -543,6 +662,7 @@ _GATE_HANDLERS = {
     "source_verification": "source_verification",
     "recency_check": "recency_check",
     "scope_validation": "scope_validation",
+    "string_coverage": "string_coverage",
 }
 
 
@@ -568,7 +688,9 @@ def run_gate(
         return gate_recency_check(project_root, gate, output_dir)
     elif gate_type == "scope_validation":
         commit_scope = gate.get("commit_scope")
-        return gate_scope_validation(output_dir, commit_scope=commit_scope)
+        return gate_scope_validation(project_root, output_dir, commit_scope=commit_scope)
+    elif gate_type == "string_coverage":
+        return gate_string_coverage(project_root, output_dir)
     else:
         return GateResult(
             gate_type, required, passed=True, skipped=True,
