@@ -81,7 +81,7 @@ Crescendo is not a library. It is not a SaaS product. It is a **template reposit
 ```
 crescendo-agent-template/              ← FULLY SELF-CONTAINED
 ├── README.md                          # Quick start guide + prerequisites
-├── GEMINI.md                          # 43 numbered directives (the Coordinator's rules)
+├── GEMINI.md                          # 43 numbered directives (Maestro's rules)
 ├── justfile                           # 8 automation commands
 ├── .agents/                           # Workspace-level AI config (auto-discovered)
 │   ├── AGENTS.md                      # 7 workspace rules for all agents
@@ -181,17 +181,17 @@ just sanitize-inputs
 This strips prompt injections, invisible Unicode, and HTML comments from all input files. Only files in `input/.sanitized/` are consumed by agents.
 
 > [!WARNING]
-> Binary files (PDF, DOCX, XLSX) cannot be auto-sanitized. The Coordinator flags them for human review.
+> Binary files (PDF, DOCX, XLSX) cannot be auto-sanitized. Maestro flags them for human review.
 
-### Step 4: Start the Coordinator
+### Step 4: Start Maestro
 
 Open **Antigravity** (Google's agentic coding IDE) and set your cloned project as the active workspace. Then type:
 
 > *"Start the Crescendo workflow."*
 
-That's it. The Coordinator reads `GEMINI.md`, discovers the packaged skills in `.agents/skills/`, and begins the orchestration sequence:
+That's it. Maestro reads `GEMINI.md`, discovers the packaged skills in `.agents/skills/`, and begins the orchestration sequence:
 
-1. **Profile selection** — The Coordinator scans `conductor/profiles/` and prompts you to choose a domain:
+1. **Profile selection** — Maestro scans `conductor/profiles/` and prompts you to choose a domain:
    ```
    Available domain profiles:
      1. engineering    — 6 roles (architect, backend, frontend, tester, etc.)
@@ -215,7 +215,7 @@ That's it. The Coordinator reads `GEMINI.md`, discovers the packaged skills in `
 > ```bash
 > cp conductor/profiles/engineering.json conductor/profile.json
 > ```
-> Then tell the Coordinator: *"Start the Crescendo workflow. Profile is already selected."*
+> Then tell Maestro: *"Start the Crescendo workflow. Profile is already selected."*
 
 ### Step 5: Monitor Progress
 
@@ -223,9 +223,9 @@ That's it. The Coordinator reads `GEMINI.md`, discovers the packaged skills in `
 just git-status-condutree    # View all agent worktrees and their status
 ```
 
-Or ask the Coordinator: *"What's the current status?"*
+Or ask Maestro: *"What's the current status?"*
 
-### Step 7: Resume After Quota Exhaustion
+### Step 6: Resume After Quota Exhaustion
 
 If the run pauses due to quota limits:
 
@@ -234,7 +234,7 @@ If the run pauses due to quota limits:
 "Resume Crescendo run"
 ```
 
-The Coordinator reads `orchestration_state.json` and picks up exactly where it stopped. See Section 10 for the full quota recovery system.
+Maestro reads `orchestration_state.json` and picks up exactly where it stopped. See Section 10 for the full quota recovery system.
 
 ---
 
@@ -312,7 +312,7 @@ Profiles support inheritance and mixins:
 
 ## 6. The 43 directives (GEMINI.md)
 
-The Coordinator follows 43 numbered directives organized into 12 sections. These are the **laws** of the system — they define what the Coordinator must and must not do.
+Maestro follows 43 numbered directives organized into 12 sections. These are the **laws** of the system — they define what Maestro must and must not do.
 
 ### Autonomous Mode Override
 When `autonomy.level` is `full`, directives 11, 14, 15, and 17 are superseded by the profile's `during_execution` policies. All bypassed decisions are logged to `run_report.md`.
@@ -335,7 +335,7 @@ When `autonomy.level` is `full`, directives 11, 14, 15, and 17 are superseded by
 | 30–32 | **Model Routing** | Advisory model preferences, fallback logging, session token tracking |
 | 33–36 | **Aggregation** | git_merge, editorial_merge, document_assembly, matrix_assembly |
 | 37–38 | **Live Conflict Detection** | Approach validation before implementation, terminate conflicting agents |
-| 39–40 | **HITL Question Protocol** | GHI for clarification (`[QUESTION][<AgentName>]`), Coordinator polls answers |
+| 39–40 | **HITL Question Protocol** | GHI for clarification (`[QUESTION][<AgentName>]`), Maestro polls answers |
 | 41–42 | **Attribution & Safety** | GHI comment signing, `.env` safety |
 | 43 | **Scribe Agent (Score)** | Required observer — forensic log at `scribe_log.md` |
 
@@ -399,7 +399,7 @@ Contradiction severity:
 
 ### Pre-Flight Briefing (Always Mandatory)
 
-Before any autonomous run, the Coordinator presents a briefing:
+Before any autonomous run, Maestro presents a briefing:
 
 ```
 ╔══════════════════════════════════════════════════════╗
@@ -449,13 +449,13 @@ The user **must** approve before execution begins. Pre-flight is the user's chan
 
 ### Autonomous Decision Rate Limiting
 
-The Coordinator can make at most **10 autonomous decisions per run** (5 for legal). Each decision is logged to `run_report.md` with:
+Maestro can make at most **10 autonomous decisions per run** (5 for legal). Each decision is logged to `run_report.md` with:
 - Ambiguity category (`cosmetic` / `architectural` / `data_destructive`)
 - What was ambiguous
 - Decision made
 - Confidence level
 
-If the limit is exceeded, the Coordinator pauses for human review.
+If the limit is exceeded, Maestro pauses for human review.
 
 ---
 
@@ -509,7 +509,7 @@ Layer C: User-Assisted Resume          ← guaranteed fallback
 **Layer C — User-Assisted Resume** (guaranteed):
 - State is already written by Layer A
 - User starts a new session: *"Resume Crescendo run"*
-- Coordinator reads `orchestration_state.json`, identifies interrupted agents, re-dispatches
+- Maestro reads `orchestration_state.json`, identifies interrupted agents, re-dispatches
 - ~1 minute of user interaction
 
 The policy string `"estimate_then_wait_then_stop"` in profile configs encodes all 3 layers.
@@ -584,7 +584,7 @@ python conductor/bin/orchestration_state.py resume --profile engineering
 
 ## 12. Model Routing
 
-Model routing is **advisory** — the Coordinator logs which model it would select for each role, but `invoke_subagent` does not currently accept a model parameter.
+Model routing is **advisory** — Maestro logs which model it would select for each role, but `invoke_subagent` does not currently accept a model parameter.
 
 ### Per-Role Preferences (Engineering Example)
 
@@ -680,7 +680,7 @@ Cross-Validation
 
 ## 15. Input Sanitization
 
-Before consuming any user-provided files, the Coordinator runs:
+Before consuming any user-provided files, Maestro runs:
 
 ```bash
 just sanitize-inputs
@@ -775,7 +775,7 @@ When a user clones the template and sets it as their Antigravity workspace, the 
    └── Domain-specific roles, phases, autonomy, budget
 ```
 
-**`.agents/AGENTS.md` is the critical file.** It is the ONLY file Antigravity auto-loads from the workspace. Everything else (GEMINI.md, CRESCENDO.md, profile.json) is discovered because AGENTS.md tells the Coordinator to read it.
+**`.agents/AGENTS.md` is the critical file.** It is the ONLY file Antigravity auto-loads from the workspace. Everything else (GEMINI.md, CRESCENDO.md, profile.json) is discovered because AGENTS.md tells Maestro to read it.
 
 ### How Skills Are Discovered
 
