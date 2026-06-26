@@ -43,6 +43,41 @@
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
       "claims_required": true
+    },
+    {
+      "role": "intake_analyst",
+      "system_prompt_template": "Perform initial intake analysis, categorize documents, and identify key legal issues for downstream analysis.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "contract_analyst",
+      "system_prompt_template": "Analyze contract terms, identify risks, obligations, and non-standard clauses.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "regulatory_analyst",
+      "system_prompt_template": "Evaluate regulatory compliance requirements and identify applicable regulations.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "case_researcher",
+      "system_prompt_template": "Research relevant case law, precedents, and statutory interpretations.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "general_counsel",
+      "system_prompt_template": "Provide final legal review, synthesize analysis outputs, and produce authoritative legal recommendations.",
+      "context_files": ["conductor/product.md", "conductor/workflow.md"],
+      "output_format": "markdown",
+      "claims_required": true
     }
   ],
   "shared_truth": {
@@ -160,12 +195,13 @@
       "confirm_commit_scope": true
     },
     "during_execution": {
-      "on_gate_failure": "retry_then_skip",
-      "on_ambiguity": "best_judgment",
+      "on_gate_failure": "write_state_and_stop",
+      "on_ambiguity": "write_state_and_stop",
       "on_merge_conflict": "write_state_and_stop",
       "on_quota_exhaustion": "estimate_then_wait_then_stop",
       "on_agent_error": "retry_then_flag",
-      "heuristic_gates_blocking": "derived"
+      "heuristic_gates_blocking": "derived",
+      "max_autonomous_decisions": 5
     },
     "model_strategy": {
       "preference": "single_session",

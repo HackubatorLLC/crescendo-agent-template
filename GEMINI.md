@@ -24,7 +24,7 @@ The Coordinator MUST log all decisions it would have asked the human about to `r
 ## Domain Profile
 8. **Profile-Driven Execution**: Read `conductor/profile.json` before dispatching any agents. It defines the isolation strategy, agent roles, quality gates, data classification, and budget limits.
 9. **Respect Data Classification**: If `profile.json` specifies `data_classification: confidential`, agents must NOT include any content from shared truth documents in publicly-facing outputs.
-10. **Respect Budget Limits**: Do NOT spawn more agents than `budget.max_agents` allows.
+10. **Respect Budget Limits**: Do NOT spawn more concurrent agents than `budget.suggested_max_agents` recommends. The actual limit is confirmed during pre-flight.
 
 ## Quality Gates & Contradiction Resolution
 11. **Cross-Validate Before Merging**: Before any merge or final aggregation, the Coordinator MUST run `python conductor/bin/cross_validate_outputs.py`. If HIGH-severity contradictions are found, the merge is BLOCKED until a human resolves them. (In autonomous mode: apply `on_gate_failure` policy; log to run_report.md.)

@@ -57,6 +57,41 @@
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
       "claims_required": true
+    },
+    {
+      "role": "web_researcher",
+      "system_prompt_template": "Conduct systematic web research, evaluate source credibility, and extract relevant data.",
+      "context_files": ["conductor/product.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "data_collector",
+      "system_prompt_template": "Gather and organize primary and secondary data from specified sources.",
+      "context_files": ["conductor/product.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "analyst",
+      "system_prompt_template": "Perform quantitative and qualitative analysis of collected data.",
+      "context_files": ["conductor/product.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "report_writer",
+      "system_prompt_template": "Write clear, structured research reports with proper citations and methodology sections.",
+      "context_files": ["conductor/product.md"],
+      "output_format": "markdown",
+      "claims_required": true
+    },
+    {
+      "role": "research_lead",
+      "system_prompt_template": "Coordinate research team outputs, ensure methodology consistency, and produce final synthesis.",
+      "context_files": ["conductor/product.md"],
+      "output_format": "markdown",
+      "claims_required": true
     }
   ],
   "shared_truth": {
@@ -168,7 +203,8 @@
       "on_merge_conflict": "write_state_and_stop",
       "on_quota_exhaustion": "estimate_then_wait_then_stop",
       "on_agent_error": "retry_then_flag",
-      "heuristic_gates_blocking": "derived"
+      "heuristic_gates_blocking": "derived",
+      "max_autonomous_decisions": 10
     },
     "model_strategy": {
       "preference": "single_session",

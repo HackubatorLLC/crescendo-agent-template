@@ -85,6 +85,48 @@
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
       "claims_required": true
+    },
+    {
+      "role": "translator_es",
+      "system_prompt_template": "Translate content to Spanish (es), maintaining cultural appropriateness and linguistic accuracy.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "translator_fr",
+      "system_prompt_template": "Translate content to French (fr), maintaining cultural appropriateness and linguistic accuracy.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "translator_de",
+      "system_prompt_template": "Translate content to German (de), maintaining cultural appropriateness and linguistic accuracy.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "translator_ja",
+      "system_prompt_template": "Translate content to Japanese (ja), maintaining cultural appropriateness and linguistic accuracy.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "translator_ar",
+      "system_prompt_template": "Translate content to Arabic (ar), maintaining cultural appropriateness and linguistic accuracy.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "code",
+      "claims_required": true
+    },
+    {
+      "role": "localization_lead",
+      "system_prompt_template": "Coordinate localization workflow, review translations for consistency, and manage locale-specific quality.",
+      "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
+      "output_format": "markdown",
+      "claims_required": true
     }
   ],
   "shared_truth": {
@@ -201,7 +243,8 @@
       "on_merge_conflict": "write_state_and_stop",
       "on_quota_exhaustion": "estimate_then_wait_then_stop",
       "on_agent_error": "retry_then_flag",
-      "heuristic_gates_blocking": "derived"
+      "heuristic_gates_blocking": "derived",
+      "max_autonomous_decisions": 10
     },
     "model_strategy": {
       "preference": "single_session",

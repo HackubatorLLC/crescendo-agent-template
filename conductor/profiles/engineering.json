@@ -173,7 +173,8 @@
       "on_merge_conflict": "write_state_and_stop",
       "on_quota_exhaustion": "estimate_then_wait_then_stop",
       "on_agent_error": "retry_then_flag",
-      "heuristic_gates_blocking": "derived"
+      "heuristic_gates_blocking": "derived",
+      "max_autonomous_decisions": 10
     },
     "model_strategy": {
       "preference": "single_session",

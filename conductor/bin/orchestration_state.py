@@ -321,6 +321,9 @@ def cmd_update(args: argparse.Namespace) -> int:
 
     # Recompute overall run status (with optional failure strategy)
     failure_strategy = getattr(args, "failure_strategy", None)
+    # OBS-2: If no explicit CLI override, auto-read from the profile
+    if failure_strategy is None:
+        failure_strategy = _load_profile_failure_strategy(project_root, state)
     _recompute_run_status(state, failure_strategy=failure_strategy)
     _save_state(project_root, state)
 
@@ -346,12 +349,26 @@ def _recompute_run_status(
         state["status"] = "running"
         return
 
+    # NEW-3 helper: determine if an agent counts as a terminal failure
+    def _is_hard_failure(a: Dict[str, Any]) -> bool:
+        if a["status"] == "failed":
+            return True
+        if (
+            a["status"] == "interrupted"
+            and a.get("interrupt_reason") != "quota_exhausted"
+        ):
+            return True
+        return False
+
     # M4: all_or_nothing – any single failure halts the run
     if failure_strategy == "all_or_nothing":
         for a in agents:
-            if a["status"] == "failed":
+            if _is_hard_failure(a):
+                label = a["status"]
+                if a["status"] == "interrupted":
+                    label = f"interrupted ({a.get('interrupt_reason', 'unknown')})"
                 print(
-                    f"{_RED}all_or_nothing: Agent {a['agent_id']} failed. "
+                    f"{_RED}all_or_nothing: Agent {a['agent_id']} {label}. "
                     f"Halting entire run.{_RESET}",
                     file=sys.stderr,
                 )
@@ -360,8 +377,30 @@ def _recompute_run_status(
 
     statuses = {a["status"] for a in agents}
 
+    # Determine which agents are in a truly terminal state:
+    #   completed, failed, or interrupted with a non-quota reason
+    terminal_agents = [
+        a for a in agents
+        if a["status"] in ("completed", "failed")
+        or (
+            a["status"] == "interrupted"
+            and a.get("interrupt_reason") != "quota_exhausted"
+        )
+    ]
+    all_terminal = len(terminal_agents) == len(agents)
+
     if statuses == {"completed"}:
         state["status"] = "completed"
+    elif all_terminal:
+        # Every agent reached a terminal state – compute final result
+        has_failure = any(_is_hard_failure(a) for a in agents)
+        has_completed = any(a["status"] == "completed" for a in agents)
+        if has_failure and has_completed:
+            state["status"] = "partial"
+        elif has_failure:
+            state["status"] = "failed"
+        else:
+            state["status"] = "completed"
     elif "running" in statuses or "pending" in statuses or "interrupted" in statuses:
         state["status"] = "running"
     elif "failed" in statuses and "completed" in statuses:
@@ -576,6 +615,28 @@ def _find_profile(project_root: str, profile_name: str) -> Optional[str]:
     if candidate.exists():
         return str(candidate)
     return None
+
+
+def _load_profile_failure_strategy(
+    project_root: str, state: Dict[str, Any]
+) -> Optional[str]:
+    """Read the failure strategy from the profile referenced in *state*.
+
+    Returns the ``failure_strategy.strategy`` string from the profile JSON,
+    or ``None`` if the profile cannot be found or parsed.
+    """
+    profile_name = state.get("profile")
+    if not profile_name:
+        return None
+    profile_path = os.path.join(
+        project_root, "conductor", "profiles", profile_name + ".json"
+    )
+    try:
+        with open(profile_path, "r", encoding="utf-8") as fh:
+            profile = json.load(fh)
+        return profile.get("failure_strategy", {}).get("strategy")
+    except (OSError, json.JSONDecodeError):
+        return None
 
 
 # ---------------------------------------------------------------------------
