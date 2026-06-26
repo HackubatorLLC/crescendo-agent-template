@@ -628,6 +628,9 @@ def _load_profile_failure_strategy(
     profile_name = state.get("profile")
     if not profile_name:
         return None
+    # Sanitize: reject path traversal characters
+    if "/" in profile_name or "\\" in profile_name or ".." in profile_name:
+        return None
     profile_path = os.path.join(
         project_root, "conductor", "profiles", profile_name + ".json"
     )
