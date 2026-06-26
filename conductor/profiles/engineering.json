@@ -21,42 +21,48 @@
       "system_prompt_template": "You are a data engineer responsible for designing and implementing data models, schemas, and data pipelines. Ensure data integrity and optimal storage patterns.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "architect",
       "system_prompt_template": "You are a software architect who designs system structure, defines module boundaries, and ensures the technical approach aligns with product requirements and scalability goals.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "backend_developer",
       "system_prompt_template": "You are a backend developer who implements server-side logic, APIs, and services according to the architecture plan. Write clean, tested, production-ready code.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "frontend_developer",
       "system_prompt_template": "You are a frontend developer who builds user-facing interfaces and client-side logic. Implement components that match design specs and integrate with backend APIs.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "tester",
       "system_prompt_template": "You are a test engineer who writes and executes unit, integration, and end-to-end tests. Ensure comprehensive coverage and identify edge-case failures.",
       "context_files": ["conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "code_reviewer",
       "system_prompt_template": "You are a senior code reviewer who evaluates code quality, correctness, security, and adherence to project standards. Provide actionable feedback with specific line references.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     }
   ],
   "shared_truth": {
@@ -75,6 +81,7 @@
   },
   "budget": {
     "mode": "quota_based",
+    "_budget_note": "budget.mode and budget_limit_usd are interpreted by the Coordinator LLM, not by deterministic scripts. Set mode to 'api_key' only when using direct API keys.",
     "suggested_max_agents": 8,
     "budget_limit_usd": 5.00,
     "cost_estimation_before_dispatch": true,
@@ -157,8 +164,7 @@
       }
     },
     "session_awareness": {
-      "track_usage_per_model": true,
-      "auto_fallback_on_limit": false
+      "track_usage_per_model": true
     }
   },
   "autonomy": {

@@ -628,12 +628,12 @@ def _load_profile_failure_strategy(
     profile_name = state.get("profile")
     if not profile_name:
         return None
-    # Sanitize: reject path traversal characters
+    # Sanitize: reject path traversal characters before resolving
     if "/" in profile_name or "\\" in profile_name or ".." in profile_name:
         return None
-    profile_path = os.path.join(
-        project_root, "conductor", "profiles", profile_name + ".json"
-    )
+    profile_path = _find_profile(project_root, profile_name)
+    if not profile_path:
+        return None
     try:
         with open(profile_path, "r", encoding="utf-8") as fh:
             profile = json.load(fh)
