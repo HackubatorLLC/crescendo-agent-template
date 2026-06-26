@@ -769,7 +769,7 @@ When a user clones the template and sets it as their Antigravity workspace, the 
    └── 43 numbered directives (isolation, gates, budget, failures)
 
 4. AI reads CRESCENDO.md                       ← INSTRUCTED BY AGENTS.MD
-   └── Full architecture reference (19 sections)
+   └── Full architecture reference (20 sections)
 
 5. AI reads conductor/profile.json             ← IF EXISTS
    └── Domain-specific roles, phases, autonomy, budget
@@ -835,6 +835,18 @@ If you are an AI agent reading this document to understand Crescendo:
 - `orchestration_state.json` is the single source of truth for run progress
 - Pre-flight approval is the user's chance to validate and walk away
 - Skills are packaged in `.agents/skills/` — no external plugins required
+
+---
+
+## 20. Acknowledgments
+
+Crescendo was built on the work of an open-source community. Credit where credit is due:
+
+- **Riccardo Carlesso** ([@palladius](https://github.com/palladius)) — The original ["Crescendo of Agents" blog series](https://ricc.rocks/en/posts/technology/2026-06-16-crescendo-of-agents-part-2/) that defined the architectural vision: parallel subagents, git worktree isolation, Conductor++ orchestration, HITL via GitHub Issues, and the Agostina coordinator. The name "Crescendo" comes from this work.
+- **Keith** — [Conductor](https://github.com/gemini-cli-extensions/conductor), the Rails-like track/task orchestration framework that Crescendo's track system is built on.
+- **Barrett Storck** — [`gemini-superpowers`](https://github.com/barretstorck/gemini-superpowers), the plugin that provides the `using-git-worktrees` skill for parallel agent isolation.
+- **Richard Seroter** — ["One prompt, four subagents and ninety seconds to get a working app"](https://seroter.com/2026/06/01/one-prompt-four-subagents-and-ninety-seconds-to-get-a-working-app/), the article that demonstrated the parallel subagent dispatch pattern.
+- **Paul** (AI Positive) — ["How I turned Gemini CLI into a multi-agent system"](https://aipositive.substack.com/p/how-i-turned-gemini-cli-into-a-multi), the "State on Disk" persistence pattern that inspired Crescendo's quota recovery system.
 
 ---
 
