@@ -489,6 +489,7 @@ def gate_recency_check(
 
 def gate_scope_validation(
     project_root: str,
+    gate: Dict[str, Any],
     output_dir: str,
     commit_scope: Optional[List[str]] = None,
 ) -> GateResult:
@@ -500,7 +501,7 @@ def gate_scope_validation(
     scope causes a FAIL.
     """
     gate_type = "scope_validation"
-    required = True  # scope violations should block
+    required = gate.get("required", True)  # default True: scope violations should block
 
     if not commit_scope:
         return GateResult(
@@ -543,11 +544,12 @@ def gate_scope_validation(
 
 def gate_string_coverage(
     project_root: str,
+    gate: Dict[str, Any],
     output_dir: str,
 ) -> GateResult:
     """Check that all locale string files have at least as many keys as the base."""
     gate_type = "string_coverage"
-    required = False
+    required = gate.get("required", False)
 
     # Directories that conventionally hold locale files
     locale_dir_names = {"locales", "i18n", "translations", "strings"}
@@ -688,9 +690,9 @@ def run_gate(
         return gate_recency_check(project_root, gate, output_dir)
     elif gate_type == "scope_validation":
         commit_scope = gate.get("commit_scope")
-        return gate_scope_validation(project_root, output_dir, commit_scope=commit_scope)
+        return gate_scope_validation(project_root, gate, output_dir, commit_scope=commit_scope)
     elif gate_type == "string_coverage":
-        return gate_string_coverage(project_root, output_dir)
+        return gate_string_coverage(project_root, gate, output_dir)
     else:
         return GateResult(
             gate_type, required, passed=True, skipped=True,
