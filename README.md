@@ -65,4 +65,4 @@ just sanitize-inputs
 
 ## License
 
-Proprietary — IrongatePropertyCollective
+Proprietary — See LICENSE file for details.
