@@ -13,6 +13,8 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import glob
+import json
 import os
 import re
 import sys
@@ -208,6 +210,57 @@ def extract_claims(filepath: str, lines: List[str]) -> List[Claim]:
                         value=str(num),
                         context=stripped,
                     ))
+
+    return claims
+
+
+def _extract_structured_claims(output_dir: str) -> List[Claim]:
+    """Load claims from *.claims.json files (EAV format).
+
+    Each file must contain a top-level ``claims`` array of objects with at
+    least ``entity``, ``attribute``, and ``value`` keys.  Optional fields:
+    ``confidence`` (float) and ``source`` (str).
+
+    Returns a list of :class:`Claim` objects using ``attribute`` as the
+    ``claim_type`` and ``entity`` as the entity key.
+    """
+    claims: List[Claim] = []
+    pattern = os.path.join(output_dir, "**", "*.claims.json")
+    for fpath in sorted(glob.glob(pattern, recursive=True)):
+        rel = os.path.relpath(fpath, output_dir)
+        try:
+            with open(fpath, "r", encoding="utf-8") as fh:
+                data = json.load(fh)
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"[cross-validate] WARNING: could not read {rel}: {exc}")
+            continue
+
+        if not isinstance(data.get("claims"), list):
+            print(f"[cross-validate] WARNING: {rel} missing 'claims' array, skipping")
+            continue
+
+        for entry in data["claims"]:
+            entity = entry.get("entity", "")
+            attribute = entry.get("attribute", "")
+            value = entry.get("value", "")
+            confidence = entry.get("confidence", 1.0)
+            source = entry.get("source", rel)
+
+            claims.append(Claim(
+                source_file=rel,
+                line_number=0,
+                raw_line=f"[structured] {entity}.{attribute}={value}",
+                claim_type=attribute,
+                entity=entity.lower(),
+                value=str(value),
+                context=(
+                    f"{entity}.{attribute} = {value} "
+                    f"(confidence={confidence}, source={source})"
+                ),
+            ))
+
+        if claims:
+            print(f"  • {rel}: {len([c for c in claims if c.source_file == rel])} structured claim(s) loaded")
 
     return claims
 
@@ -440,8 +493,24 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     print(f"[cross-validate] Scanning {len(files)} file(s) in '{output_dir}' …")
 
-    # Extract claims from every file
+    # Layer 1: Structured claims from .claims.json (preferred).
+    # Layer 2: Text-extracted claims (fallback).
     all_claims: List[Claim] = []
+
+    # --- Layer 1: structured claims from .claims.json -----------------
+    structured_claims = _extract_structured_claims(output_dir)
+    all_claims.extend(structured_claims)
+
+    # Track (entity, attribute/claim_type) keys covered by structured claims
+    # so we can deduplicate against text-extracted ones later.
+    structured_keys: Set[Tuple[str, str]] = {
+        (c.entity, c.claim_type) for c in structured_claims
+    }
+    if structured_claims:
+        print(f"[cross-validate] Structured claims loaded: {len(structured_claims)}")
+
+    # --- Layer 2: text-extracted claims (fallback) --------------------
+    text_claims_total = 0
     for fpath in files:
         rel = os.path.relpath(fpath, output_dir)
         try:
@@ -451,11 +520,20 @@ def main(argv: Optional[List[str]] = None) -> int:
             print(f"[cross-validate] WARNING: could not read {rel}: {exc}")
             continue
         claims = extract_claims(rel, file_lines)
+        # Deduplicate: structured claims win over text-extracted ones
+        claims = [
+            c for c in claims
+            if (c.entity, c.claim_type) not in structured_keys
+        ]
         all_claims.extend(claims)
+        text_claims_total += len(claims)
         if claims:
-            print(f"  • {rel}: {len(claims)} claim(s) extracted")
+            print(f"  • {rel}: {len(claims)} text claim(s) extracted")
 
-    print(f"[cross-validate] Total claims extracted: {len(all_claims)}")
+    print(
+        f"[cross-validate] Total claims: {len(all_claims)} "
+        f"({len(structured_claims)} structured + {text_claims_total} text-extracted)"
+    )
 
     # Detect contradictions
     contradictions = detect_contradictions(all_claims)

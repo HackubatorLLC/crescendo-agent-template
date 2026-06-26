@@ -21,112 +21,128 @@
       "system_prompt_template": "You are a string extractor who identifies and extracts all translatable strings from source code and resources. Produce structured catalogs preserving context and placeholders.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "json",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "locale_coordinator",
       "system_prompt_template": "You are a locale coordinator who manages the translation workflow across target locales, tracks completion status, and ensures consistency between language variants.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "translator",
       "system_prompt_template": "You are a translator who produces accurate, natural-sounding translations for the assigned locale. Preserve meaning, tone, and technical terminology while adapting to cultural context.",
       "context_files": ["conductor/product.md"],
       "output_format": "json",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "cultural_reviewer",
       "system_prompt_template": "You are a cultural reviewer who evaluates translations for cultural appropriateness, sensitivity, and local conventions. Flag content that may be offensive or confusing in the target culture.",
       "context_files": ["conductor/product.md", "conductor/workflow.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "terminology_manager",
       "system_prompt_template": "You are a terminology manager who maintains glossaries and ensures consistent use of key terms across all locales. Resolve terminology conflicts and update reference dictionaries.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "json",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "format_validator",
       "system_prompt_template": "You are a format validator who checks translated strings for correct placeholders, date/number formats, string length constraints, and encoding compliance.",
       "context_files": ["conductor/tech-stack.md"],
       "output_format": "json",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "screenshot_comparator",
       "system_prompt_template": "You are a screenshot comparator who visually compares rendered UI across locales to detect layout breaks, text truncation, and rendering issues caused by translation.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "rtl_specialist",
       "system_prompt_template": "You are an RTL specialist who validates right-to-left language rendering, bidi text handling, and layout mirroring for Arabic, Hebrew, and other RTL locales.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "pluralization_auditor",
       "system_prompt_template": "You are a pluralization auditor who verifies correct plural form handling across locales with different pluralization rules. Ensure CLDR plural categories are properly implemented.",
       "context_files": ["conductor/tech-stack.md"],
       "output_format": "json",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "regression_tester",
       "system_prompt_template": "You are a regression tester who validates that localization changes do not break existing translations or introduce regressions in previously approved strings.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md", "conductor/workflow.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "manual"
     },
     {
       "role": "translator_es",
       "system_prompt_template": "Translate content to Spanish (es), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "translator_fr",
       "system_prompt_template": "Translate content to French (fr), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "translator_de",
       "system_prompt_template": "Translate content to German (de), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "translator_ja",
       "system_prompt_template": "Translate content to Japanese (ja), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "translator_ar",
       "system_prompt_template": "Translate content to Arabic (ar), maintaining cultural appropriateness and linguistic accuracy.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "code",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     },
     {
       "role": "localization_lead",
       "system_prompt_template": "Coordinate localization workflow, review translations for consistency, and manage locale-specific quality.",
       "context_files": ["conductor/product.md", "conductor/tech-stack.md"],
       "output_format": "markdown",
-      "claims_required": true
+      "claims_required": true,
+      "phase_binding": "auto"
     }
   ],
   "shared_truth": {
@@ -144,6 +160,7 @@
   },
   "budget": {
     "mode": "quota_based",
+    "_budget_note": "budget.mode and budget_limit_usd are interpreted by the Coordinator LLM, not by deterministic scripts. Set mode to 'api_key' only when using direct API keys.",
     "suggested_max_agents": 10,
     "budget_limit_usd": 4.00,
     "cost_estimation_before_dispatch": true,
@@ -227,8 +244,7 @@
       }
     },
     "session_awareness": {
-      "track_usage_per_model": true,
-      "auto_fallback_on_limit": false
+      "track_usage_per_model": true
     }
   },
   "autonomy": {
