@@ -71,7 +71,7 @@ def run_preflight(project_root: str) -> int:
         "conductor/bin/cross_validate_outputs.py",
         "conductor/bin/sanitize_inputs.py",
         "conductor/bin/git_status_patched.py",
-        "conductor/bin/conductor-inspector",
+        "conductor/bin/conductor_inspector.py",
         "conductor/bin/inject-ghi",
         "conductor/bin/poll_ghi_questions.py",
         "conductor/bin/preflight_check.py",
